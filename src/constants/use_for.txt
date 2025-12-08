@@ -1,0 +1,1 @@
+colors, API URLs, config values
