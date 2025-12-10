@@ -1,0 +1,56 @@
+export interface Ratings {
+	imdb?: number;
+	rottenTomatoes?: number;
+	user?: number;
+}
+
+export interface Trailer {
+	url: string;
+	type?: string;
+	thumbnail?: string;
+}
+
+export interface ShowTime {
+	cinemaId?: string;
+	startsAt: string; // ISO string
+	purchaseUrl?: string;
+	auditorium?: string;
+}
+
+export interface Movie {
+	id: string;
+	title: string;
+	year?: number;
+	poster?: string;
+	plot?: string;
+	durationMinutes?: number;
+	rating?: string;
+	directors?: string[];
+	writers?: string[];
+	actors?: string[];
+	genres?: string[];
+	country?: string;
+	contentRating?: string;
+	trailers?: Trailer[];
+	showtimes?: ShowTime[];
+	ratings?: Ratings;
+}
+
+export interface UpcomingMovie extends Movie {
+	releaseDate?: string;
+}
+
+export interface Cinema {
+	id: string;
+	name: string;
+	description?: string;
+	address?: string;
+	city?: string;
+	phone?: string;
+	website?: string;
+	image?: string;
+	location?: {
+		lat: number;
+		lon: number;
+	};
+}
