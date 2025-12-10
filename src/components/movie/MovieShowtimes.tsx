@@ -19,7 +19,11 @@ export const MovieShowtimes: React.FC<MovieShowtimesProps> = ({ showtimes }) => 
 
   const handlePurchase = (url?: string) => {
     if (url) {
-      Linking.openURL(url).catch(() => {
+      // Ensure URL has protocol
+      const fullUrl = url.startsWith("http://") || url.startsWith("https://") 
+        ? url 
+        : `https://${url}`;
+      Linking.openURL(fullUrl).catch(() => {
         alert("Unable to open purchase link");
       });
     }
@@ -34,27 +38,30 @@ export const MovieShowtimes: React.FC<MovieShowtimesProps> = ({ showtimes }) => 
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {showtimes.map((showtime, idx) => (
-          <View key={idx} style={styles.showtimeCard}>
-            <Text style={styles.time}>
-              {new Date(showtime.startsAt).toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </Text>
-            {showtime.auditorium && (
-              <Text style={styles.auditorium}>Hall {showtime.auditorium}</Text>
-            )}
-            {showtime.purchaseUrl && (
-              <Text
-                style={styles.purchaseButton}
-                onPress={() => handlePurchase(showtime.purchaseUrl)}
-              >
-                Buy Ticket
+        {showtimes.map((showtime, idx) => {
+          const st = showtime as any;
+          return (
+            <View key={idx} style={styles.showtimeCard}>
+              <Text style={styles.time}>
+                {st.time || st.startsAt || "—"}
               </Text>
-            )}
-          </View>
-        ))}
+              {st.info && (
+                <Text style={styles.auditorium}>{st.info}</Text>
+              )}
+              {st.auditorium && (
+                <Text style={styles.auditorium}>Hall {st.auditorium}</Text>
+              )}
+              {st.purchase_url && (
+                <Text
+                  style={styles.purchaseButton}
+                  onPress={() => handlePurchase(st.purchase_url)}
+                >
+                  Buy Ticket
+                </Text>
+              )}
+            </View>
+          );
+        })}
       </ScrollView>
     </View>
   );

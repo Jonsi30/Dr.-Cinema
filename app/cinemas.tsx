@@ -1,12 +1,12 @@
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { fetchTheaters } from "../src/services/api";
-import { Theater } from "../src/types/types";
+import { fetchCinemas } from "../src/api/cinemas";
+import { Cinema } from "../src/types/types";
 
 export default function CinemasScreen() {
   const router = useRouter();
-  const [theaters, setTheaters] = useState<Theater[]>([]);
+  const [theaters, setTheaters] = useState<Cinema[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,20 +16,12 @@ export default function CinemasScreen() {
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchTheaters();
-        console.log("RAW /theaters response:", data);
-        const list: Theater[] = Array.isArray(data) ? data : data.theaters ?? [];
-        const normalized = list.map((t: any) => ({
-          ...t,
-          website: typeof t.website === "string" && t.website.length && !/^https?:\/\//i.test(t.website)
-            ? `https://${t.website}`
-            : t.website,
-        }));
-        const sorted = normalized.sort((a: any, b: any) => (a.name || "").localeCompare(b.name || ""));
+        const data = await fetchCinemas();
+        const sorted = data.sort((a, b) => a.name.localeCompare(b.name));
         if (mounted) setTheaters(sorted);
       } catch (e: any) {
-        console.error("fetchTheaters error full:", e, e?.response?.data);
-        if (mounted) setError(e.message ?? "Failed to load theaters");
+        console.error("fetchCinemas error:", e);
+        if (mounted) setError(e.message ?? "Failed to load cinemas");
       } finally {
         if (mounted) setLoading(false);
       }
@@ -46,18 +38,18 @@ export default function CinemasScreen() {
     <View style={styles.container}>
       <FlatList
         data={theaters}
-        keyExtractor={(item) => String(item.id ?? item._id ?? item.name)}
+        keyExtractor={(item) => String(item.id ?? item.name)}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.item}
             onPress={() => {
-              router.push({ pathname: "/cinema", params: { id: String(item.id ?? item._id) } });
+              router.push({ pathname: "/cinema", params: { id: String(item.id) } });
             }}
           >
             <View style={{ flex: 1 }}>
               <Text style={styles.title}>{item.name}</Text>
               {item.website ? (
-                <Text style={styles.link} onPress={() => Linking.openURL(item.website)}>{item.website}</Text>
+                <Text style={styles.link} onPress={() => Linking.openURL(item.website!)}>{item.website}</Text>
               ) : null}
             </View>
             <Text style={styles.chev}>›</Text>

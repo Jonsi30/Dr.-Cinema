@@ -12,8 +12,10 @@ export interface Trailer {
 
 export interface ShowTime {
 	cinemaId?: string;
-	startsAt: string; // ISO string
+	startsAt?: string; // ISO string
+	time?: string; // API format like "13:00 (1)"
 	purchaseUrl?: string;
+	purchase_url?: string;
 	auditorium?: string;
 }
 
@@ -33,6 +35,7 @@ export interface Movie {
 	contentRating?: string;
 	trailers?: Trailer[];
 	showtimes?: ShowTime[];
+	schedule?: ShowTime[];
 	ratings?: Ratings;
 }
 
@@ -44,7 +47,11 @@ export interface Cinema {
 	id: string;
 	name: string;
 	description?: string;
-	address?: string;
+	address?: {
+		street?: string;
+		city?: string;
+		zipcode?: string;
+	} | string;
 	city?: string;
 	phone?: string;
 	website?: string;

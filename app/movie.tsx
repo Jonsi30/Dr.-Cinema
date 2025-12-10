@@ -22,7 +22,27 @@ export default function MoviePage() {
   const movie: Movie | null = useMemo(() => {
     if (route.params?.movieData) {
       try {
-        return JSON.parse(route.params.movieData);
+        const data = JSON.parse(route.params.movieData);
+        console.log("Movie data parsed:", data);
+        
+        // Handle API response format with schedule property
+        if (data.schedule && Array.isArray(data.schedule)) {
+          // Has schedule array - map it to showtimes
+          return { ...data, showtimes: data.schedule };
+        }
+        
+        // Handle showtimes that are already objects with cinema/schedule inside
+        if (data.showtimes && Array.isArray(data.showtimes)) {
+          const flattenedShowtimes = data.showtimes.flatMap((st: any) => {
+            if (st.schedule && Array.isArray(st.schedule)) {
+              return st.schedule;
+            }
+            return st;
+          });
+          return { ...data, showtimes: flattenedShowtimes };
+        }
+        
+        return data;
       } catch {
         return null;
       }
@@ -59,9 +79,9 @@ export default function MoviePage() {
 
       <MoviePlot plot={movie.plot} />
 
-      {movie.showtimes && movie.showtimes.length > 0 && (
-        <MovieShowtimes showtimes={movie.showtimes} />
-      )}
+      {(movie.showtimes || movie.schedule) && (movie.showtimes?.length || movie.schedule?.length) ? (
+        <MovieShowtimes showtimes={(movie.showtimes || movie.schedule) as any} />
+      ) : null}
 
       <MovieTrailer trailers={movie.trailers} />
     </ScrollView>

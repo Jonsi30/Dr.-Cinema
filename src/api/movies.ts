@@ -13,20 +13,27 @@ export interface MovieFilters {
   cinemaId?: string;
 }
 
-const buildFilters = (filters?: MovieFilters) => ({
-  title: filters?.title,
-  imdb_rating: filters?.imdbMin,
-  rotten_tomatoes_rating: filters?.rottenTomatoesMin,
-  starts_after: filters?.startsAfter,
-  starts_before: filters?.startsBefore,
-  actors: filters?.actors,
-  directors: filters?.directors,
-  pg_rating: filters?.pgRating,
-  cinema: filters?.cinemaId,
-});
+const buildFilters = (filters?: MovieFilters) => {
+  const builtFilters = {
+    title: filters?.title,
+    imdb_rating: filters?.imdbMin,
+    rotten_tomatoes_rating: filters?.rottenTomatoesMin,
+    starts_after: filters?.startsAfter,
+    starts_before: filters?.startsBefore,
+    actors: filters?.actors,
+    directors: filters?.directors,
+    pg_rating: filters?.pgRating,
+    cinema: filters?.cinemaId,
+  };
+  console.log("buildFilters - input:", filters);
+  console.log("buildFilters - output:", builtFilters);
+  return builtFilters;
+};
 
-export const fetchMovies = (filters?: MovieFilters) =>
-  apiGet<Movie[]>("/movies", { query: buildFilters(filters) });
+export const fetchMovies = (filters?: MovieFilters) => {
+  console.log("fetchMovies called with filters:", filters);
+  return apiGet<Movie[]>("/movies", { query: buildFilters(filters) });
+};
 
 // Search for a movie by title to get its full details
 export const fetchMovieById = (title: string) =>
