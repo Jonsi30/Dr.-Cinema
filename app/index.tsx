@@ -20,10 +20,6 @@ export default function Index() {
       <Link href="/cinemas" asChild>
         <Button title="Go to Cinemas" />
       </Link>
-
-      <Link href="/cinema" asChild>
-        <Button title="Go to Cinema" />
-      </Link>
     </View>
   );
 }
