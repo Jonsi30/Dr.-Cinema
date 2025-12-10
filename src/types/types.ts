@@ -1,51 +1,78 @@
+export interface Ratings {
+	imdb?: number;
+	rottenTomatoes?: number;
+	user?: number;
+}
+
+export interface Trailer {
+	url: string;
+	type?: string;
+	thumbnail?: string;
+}
+
+export interface ShowTime {
+	cinemaId?: string;
+	startsAt?: string; // ISO string
+	time?: string; // API format like "13:00 (1)"
+	purchaseUrl?: string;
+	purchase_url?: string;
+	auditorium?: string;
+}
+
 export interface Movie {
-    id: number;
-    title: string;
-    plot?: string;
-    year?: string;
-    poster?: string;
-    durationMinutes?: number;
-    omdb?: {
-        imdbRating: string;
-        tomatoRating: string;
-        rated: string;
-    };
-    actors: string[];
-    directors: string[];
-    genres: string[];
-    showtimes: {
-        time: string;
-        theater: { id: number };
-    }[];
-};
+	id: string;
+	title: string;
+	year?: number;
+	poster?: string;
+	plot?: string;
+	durationMinutes?: number;
+	rating?: string;
+	directors?: string[];
+	writers?: string[];
+	actors?: string[];
+	genres?: string[];
+	country?: string;
+	contentRating?: string;
+	trailers?: Trailer[];
+	showtimes?: ShowTime[];
+	schedule?: ShowTime[];
+	ratings?: Ratings;
+}
 
-export type Genre = {
-    ID: number;
-    Name:string;
-    NameEN: string;
-};
+export interface UpcomingMovie extends Movie {
+	releaseDate?: string;
+}
 
-export type Rating = {
-    Source: string;
-    Value: string;
-};
-
-export type Showtime = {
-    time: string;
-};
+export interface Cinema {
+	id: string;
+	name: string;
+	description?: string;
+	address?: {
+		street?: string;
+		city?: string;
+		zipcode?: string;
+	} | string;
+	city?: string;
+	phone?: string;
+	website?: string;
+	image?: string;
+	location?: {
+		lat: number;
+		lon: number;
+	};
+}
 
 export type Theater = {
-    id: number;
-    name: string;
-    website: string;
+  _id?: string;
+  id?: string;
+  name: string;
+  website?: string;
+  description?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    zipcode?: string;
+  } | string;
+  phone?: string;
+  [k: string]: any;
 };
-
-export type MovieFilters = {
-    title?: string;
-    imdbRating?: { min: number; max: number };
-    tomatoRating?: { min: number; max: number };
-    showtimeRange?: { start: string; end: string };
-    actors?: string[];
-    directors?: string[];
-    pgRating?: string;
-}
