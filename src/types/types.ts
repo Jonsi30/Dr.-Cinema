@@ -54,3 +54,18 @@ export interface Cinema {
 		lon: number;
 	};
 }
+
+export type Theater = {
+  _id?: string;
+  id?: string;
+  name: string;
+  website?: string;
+  description?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    zipcode?: string;
+  } | string;
+  phone?: string;
+  [k: string]: any;
+};
