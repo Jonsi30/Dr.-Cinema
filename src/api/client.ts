@@ -22,13 +22,25 @@ const ensureCredentials = () => {
 };
 
 const encodeBase64 = (value: string) => {
-	if (typeof globalThis.btoa === "function") {
-		return globalThis.btoa(value);
+	// Simple Base64 encoding for React Native
+	const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+	let result = '';
+	let i = 0;
+	
+	while (i < value.length) {
+		const a = value.charCodeAt(i++);
+		const b = i < value.length ? value.charCodeAt(i++) : 0;
+		const c = i < value.length ? value.charCodeAt(i++) : 0;
+		
+		const bitmap = (a << 16) | (b << 8) | c;
+		
+		result += chars[(bitmap >> 18) & 63];
+		result += chars[(bitmap >> 12) & 63];
+		result += i - 2 < value.length ? chars[(bitmap >> 6) & 63] : '=';
+		result += i - 1 < value.length ? chars[bitmap & 63] : '=';
 	}
-
-	// eslint-disable-next-line @typescript-eslint/no-var-requires
-	const BufferImpl = require("buffer").Buffer as typeof Buffer;
-	return BufferImpl.from(value, "utf-8").toString("base64");
+	
+	return result;
 };
 
 const buildQuery = (query?: Query) => {

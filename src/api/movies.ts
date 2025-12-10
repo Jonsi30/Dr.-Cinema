@@ -30,9 +30,44 @@ const buildFilters = (filters?: MovieFilters) => {
   return builtFilters;
 };
 
-export const fetchMovies = (filters?: MovieFilters) => {
+export const fetchMovies = async (filters?: MovieFilters) => {
   console.log("fetchMovies called with filters:", filters);
-  return apiGet<Movie[]>("/movies", { query: buildFilters(filters) });
+  const movies = await apiGet<any[]>("/movies", { query: buildFilters(filters) });
+  
+  console.log(`fetchMovies: Received ${movies.length} movies from API`);
+  
+  // Deduplicate and normalize movies by ID
+  const seen = new Set<string>();
+  const unique = movies.filter((movie) => {
+    const id = String(movie.id || movie._id);
+    if (seen.has(id)) {
+      console.warn(`Duplicate movie detected: ${movie.title} (ID: ${id})`);
+      return false;
+    }
+    seen.add(id);
+    return true;
+  }).map((movie): Movie => {
+    // Log raw ratings to see what the API returns
+    if (movie.ratings) {
+      console.log(`Ratings for ${movie.title}:`, movie.ratings);
+    }
+    
+    // Normalize ratings to ensure rottenTomatoes is included
+    const ratings: any = {
+      imdb: movie.ratings?.imdb ? parseFloat(String(movie.ratings.imdb)) : undefined,
+      rottenTomatoes: movie.ratings?.rotten_critics ? parseFloat(String(movie.ratings.rotten_critics)) : 
+                      movie.ratings?.rotten_audience ? parseFloat(String(movie.ratings.rotten_audience)) : undefined,
+    };
+    
+    return {
+      ...movie,
+      id: typeof movie.id === 'string' ? parseInt(movie.id, 10) : (movie.id || 0),
+      ratings: ratings.imdb || ratings.rottenTomatoes ? ratings : undefined,
+    };
+  });
+  
+  console.log(`fetchMovies: ${movies.length} total, ${unique.length} unique after deduplication`);
+  return unique;
 };
 
 // Search for a movie by title to get its full details

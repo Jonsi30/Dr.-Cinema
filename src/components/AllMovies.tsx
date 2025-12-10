@@ -1,84 +1,83 @@
-import React from 'react';
-import { View, Text, StyleSheet, SectionList, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useMovies } from '../hooks/useMovies';
+import { useState } from 'react';
+import { ActivityIndicator, SectionList, StyleSheet, Text, View } from 'react-native';
+import { MovieFilters } from '../api/movies';
 import MovieCard from '../components/MovieCard';
-import MovieFiltersComponent from './MovieFilters';
-import { COLORS, SPACING, FONT_SIZES } from '../constants/theme';
+import MovieFiltersComponent from '../components/MovieFilters';
+import { COLORS, FONT_SIZES, SPACING } from '../constants/theme';
+import { useMovies } from '../hooks/useMovies';
 import { Movie } from '../types/types';
 
 export default function HomeScreen() {
     const router = useRouter();
-    const { movies, theaters, loading, filters, setFilters } = useMovies();
+    const [filters, setFilters] = useState<MovieFilters>({});
+    const { data: movies, loading, error } = useMovies(filters);
 
-    // Group movies by cinema/theater
-    const groupMoviesByTheater = () => {
-        const grouped: { [theaterId: number]: Movie[] } = {};
-
-        movies.forEach(movie => {
-        movie.showtimes?.forEach(showtime => {
-            const theaterId = (showtime as any).theater?.id;
-            if (theaterId) {
-            if (!grouped[theaterId]) {
-                grouped[theaterId] = [];
-            }
-            if (!grouped[theaterId].find(m => m.id === movie.id)) {
-                grouped[theaterId].push(movie);
-            }
-            }
+    const handleMoviePress = (movie: Movie) => {
+        router.push({
+            pathname: "/movie",
+            params: { 
+                movieId: movie.id,
+                movieTitle: movie.title,
+                movieData: JSON.stringify(movie),
+            },
         });
-        });
-
-        // Convert to section list format
-        return theaters
-        .filter(theater => grouped[theater.id]?.length > 0)
-        .map(theater => ({
-            title: theater.name,
-            data: grouped[theater.id] || [],
-        }));
     };
+
+    // Deduplicate movies at component level as safety measure
+    const uniqueMovies = movies ? Array.from(
+        new Map(movies.map(m => [m.id, m])).values()
+    ) : [];
 
     if (loading) {
         return (
-        <View style={[styles.container, styles.centered]}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
-            <Text style={styles.loadingText}>Loading movies...</Text>
-        </View>
+            <View style={[styles.container, styles.centered]}>
+                <ActivityIndicator size="large" color={COLORS.primary} />
+                <Text style={styles.loadingText}>Loading movies...</Text>
+            </View>
         );
     }
 
-    console.log("Movies", movies)
-    const sections = groupMoviesByTheater();
-    console.log("sections", sections)
+    if (error || !uniqueMovies || uniqueMovies.length === 0) {
+        return (
+            <View style={[styles.container, styles.centered]}>
+                <Text style={styles.loadingText}>{error || "No movies found"}</Text>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
-        <Text style={styles.title}>Movies</Text>
-        
-        <MovieFiltersComponent 
-            filters={filters}
-            onFiltersChange={setFilters}
-        />
-
-        <SectionList
-            sections={sections}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => {
-                console.log("Rendering movie:", item.title);  // Add this debug log
-                return <MovieCard movie={item} onPress={() => router.push(`/movie`)} />;
-            }}
-            renderSectionHeader={({ section: { title } }) => (
-            <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>🎬 {title}</Text>
-            </View>
-            )}
-            contentContainerStyle={styles.listContent}
-            ListEmptyComponent={
-            <Text style={styles.emptyText}>
-                No movies found. Try adjusting your filters.
-            </Text>
-            }
-        />
+            <Text style={styles.title}>Movies</Text>
+            
+            <MovieFiltersComponent 
+                filters={filters}
+                onFiltersChange={setFilters}
+            />
+            
+            <SectionList
+                sections={[{ title: "", data: uniqueMovies }]}
+                renderItem={({ item }) => (
+                    <MovieCard 
+                        movie={item} 
+                        onPress={() => handleMoviePress(item)}
+                    />
+                )}
+                renderSectionHeader={({ section: { title } }) => 
+                    title ? (
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionTitle}>{title}</Text>
+                        </View>
+                    ) : null
+                }
+                keyExtractor={(item, index) => `${item.id}-${index}`}
+                contentContainerStyle={styles.listContent}
+                ListEmptyComponent={
+                    <Text style={styles.emptyText}>
+                        No movies found.
+                    </Text>
+                }
+            />
         </View>
     );
 }

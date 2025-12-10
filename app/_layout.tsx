@@ -43,9 +43,7 @@ export default function RootLayout() {
       {/* Hidden screens for navigation */}
       <Tabs.Screen name="cinema" options={{ href: null }} />
       <Tabs.Screen name="movie" options={{ href: null }} />
-      <Tabs.Screen name="movies" options={{ href: null }} />
       <Tabs.Screen name="authDev" options={{ href: null }} />
-      <Tabs.Screen name="home" options={{ href: null }} />
     </Tabs>
   );
 }

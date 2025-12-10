@@ -23,7 +23,6 @@ export default function MoviePage() {
     if (route.params?.movieData) {
       try {
         const data = JSON.parse(route.params.movieData);
-        console.log("Movie data parsed:", data);
         
         // Handle API response format with schedule property
         if (data.schedule && Array.isArray(data.schedule)) {
