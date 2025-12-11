@@ -23,22 +23,26 @@ export default function MoviePage() {
     if (route.params?.movieData) {
       try {
         const data = JSON.parse(route.params.movieData);
+        const cinemaId = route.params?.cinemaId;
         
-        // Handle API response format with schedule property
+        // Normalize showtimes: prefer 'schedule' or flatten 'showtimes'
+        let showtimes: any[] | undefined = undefined;
         if (data.schedule && Array.isArray(data.schedule)) {
-          // Has schedule array - map it to showtimes
-          return { ...data, showtimes: data.schedule };
+          showtimes = data.schedule;
+        } else if (data.showtimes && Array.isArray(data.showtimes)) {
+          showtimes = data.showtimes.flatMap((st: any) => (st && Array.isArray(st.schedule) ? st.schedule : st));
         }
-        
-        // Handle showtimes that are already objects with cinema/schedule inside
-        if (data.showtimes && Array.isArray(data.showtimes)) {
-          const flattenedShowtimes = data.showtimes.flatMap((st: any) => {
-            if (st.schedule && Array.isArray(st.schedule)) {
-              return st.schedule;
-            }
-            return st;
+
+        // If a cinemaId was provided (user selected a cinema when opening the movie), filter to that cinema
+        if (cinemaId && Array.isArray(showtimes)) {
+          showtimes = showtimes.filter((s: any) => {
+            const stCinema = s.cinema?.id ?? s.cinemaId ?? s.theater?.id ?? s.theaterId;
+            return stCinema !== undefined && String(stCinema) === String(cinemaId);
           });
-          return { ...data, showtimes: flattenedShowtimes };
+        }
+
+        if (showtimes) {
+          return { ...data, showtimes };
         }
         
         return data;
@@ -47,7 +51,7 @@ export default function MoviePage() {
       }
     }
     return null;
-  }, [route.params?.movieData]);
+  }, [route.params?.movieData, route.params?.cinemaId]);
 
   if (!movie) {
     return (

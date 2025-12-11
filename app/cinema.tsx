@@ -113,7 +113,7 @@ export default function CinemaDetailScreen() {
             }).filter(Boolean);
 
             return (
-                <TouchableOpacity style={styles.movieCard} onPress={() => router.push({ pathname: "/movie", params: { movieData: JSON.stringify(item) } })}>
+                <TouchableOpacity style={styles.movieCard} onPress={() => router.push({ pathname: "/movie", params: { movieData: JSON.stringify(item), cinemaId: id } })}>
                 {item.poster ? (
                     <Image source={{ uri: item.poster }} style={styles.poster} />
                 ) : (
