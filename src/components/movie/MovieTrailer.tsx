@@ -117,16 +117,32 @@ export const MovieTrailer: React.FC<MovieTrailerProps> = ({ trailers }) => {
 
     const getYouTubeId = (url: string): string | null => {
         try {
-            // plain watch url
+            // Try using the URL API first for robustness
+            try {
+                const u = new URL(url);
+                // watch?v=ID
+                if (u.searchParams && u.searchParams.get("v")) return u.searchParams.get("v");
+                // youtu.be short links produce hostname youtu.be and path /ID
+                if (/youtu\.be$/i.test(u.hostname)) {
+                    const p = u.pathname.replace(/^\//, "");
+                    if (/^[a-zA-Z0-9_-]{6,}$/.test(p)) return p;
+                }
+                // embed path like /embed/ID
+                const embedMatch = u.pathname.match(/\/embed\/([a-zA-Z0-9_-]{6,})/);
+                if (embedMatch && embedMatch[1]) return embedMatch[1];
+            } catch {
+                // URL parsing may fail for non-URL strings; fall back to regex
+            }
+
+            // regex fallbacks for various YouTube URL shapes (IDs are typically 11 chars but accept 6+)
             const m = url.match(/[?&]v=([a-zA-Z0-9_-]{6,})/);
             if (m && m[1]) return m[1];
-            // youtu.be short link
             const m2 = url.match(/youtu\.be\/([a-zA-Z0-9_-]{6,})/);
             if (m2 && m2[1]) return m2[1];
-            // embed url
             const m3 = url.match(/embed\/([a-zA-Z0-9_-]{6,})/);
             if (m3 && m3[1]) return m3[1];
-            // fallback: last path segment if it looks like an id
+
+            // last resort: last path segment
             const parts = url.split("/").filter(Boolean);
             const last = parts[parts.length - 1];
             if (last && /^[a-zA-Z0-9_-]{6,}$/.test(last)) return last;
@@ -147,29 +163,33 @@ export const MovieTrailer: React.FC<MovieTrailerProps> = ({ trailers }) => {
         if (isYouTube(url)) {
             const id = getYouTubeId(url);
             const watchUrl = id ? `https://www.youtube.com/watch?v=${id}` : url;
-            const appUrl = id ? `vnd.youtube://watch?v=${id}` : undefined;
-
-            if (appUrl) {
+            // Try a few known app URL schemes (some platforms support youtube://, vnd.youtube://)
+            const appSchemes = id ? [`vnd.youtube://watch?v=${id}`, `youtube://watch?v=${id}`] : [];
+            for (const scheme of appSchemes) {
                 try {
-                    await Linking.openURL(appUrl);
+                    await Linking.openURL(scheme);
                     return;
                 } catch {
-                    // couldn't open YouTube app, fall back
+                    // ignore and try next
                 }
             }
 
+            // Try in-app browser, then external Linking
             try {
-                await WebBrowser.openBrowserAsync(watchUrl);
+                const res = await WebBrowser.openBrowserAsync(watchUrl);
+                if (res) return;
+            } catch {
+                // ignore and try Linking.openURL below
+            }
+
+            try {
+                await Linking.openURL(watchUrl);
                 return;
             } catch {
-                // try external Linking
+                console.warn("Failed to open YouTube trailer via Linking");
                 try {
-                    await Linking.openURL(watchUrl);
-                    return;
-                } catch {
-                    console.warn("Failed to open YouTube trailer");
-                    alert("Unable to open trailer");
-                }
+                    alert(`Unable to open trailer: ${watchUrl}`);
+                } catch {}
             }
 
             return;

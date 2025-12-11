@@ -214,7 +214,32 @@ export const fetchMovies = async (filters?: MovieFilters) => {
 export const fetchMovieById = (title: string) =>
   apiGet<Movie[]>("/movies", { query: { title } }).then((movies) => movies?.[0] || null);
 
-export const fetchUpcomingMovies = () => apiGet<UpcomingMovie[]>("/upcoming");
+export const fetchUpcomingMovies = async (): Promise<UpcomingMovie[]> => {
+  const items = await apiGet<UpcomingMovie[]>('/upcoming');
+  if (!Array.isArray(items)) return [];
+
+  // Deduplicate by a stable identifier (prefer id or _id, fallback to title)
+  const seen = new Set<string>();
+  const unique: UpcomingMovie[] = [];
+
+  for (const it of items) {
+    const key = String(it?.id ?? (it as any)?._id ?? it?.title ?? '');
+    if (!key) {
+      // If nothing usable, try to stringify minimal identifying fields
+      const alt = JSON.stringify({ title: it?.title, poster: it?.poster, year: it?.year });
+      if (seen.has(alt)) continue;
+      seen.add(alt);
+      unique.push(it);
+      continue;
+    }
+
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(it);
+  }
+
+  return unique;
+};
 
 export const fetchMovieShowtimes = (movieId: string, cinemaId?: string) =>
   apiGet<ShowTime[]>(`/movies/${movieId}/showtimes`, {
