@@ -44,7 +44,7 @@ export default function FavouritesPage() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Favourites</Text>
+      
 
       {loading ? (
         <Text style={styles.loading}>Loading…</Text>

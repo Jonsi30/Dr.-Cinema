@@ -48,7 +48,6 @@ export default function HomeScreen() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Movies</Text>
             
             <MovieFiltersComponent 
                 filters={filters}

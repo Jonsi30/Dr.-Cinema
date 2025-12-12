@@ -1,5 +1,5 @@
-import { useRoute } from "@react-navigation/native";
-import { useMemo } from "react";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { useLayoutEffect, useMemo } from "react";
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { MovieHeader } from "../src/components/movie/MovieHeader";
 import { MovieMeta } from "../src/components/movie/MovieMeta";
@@ -80,6 +80,18 @@ export default function MoviePage() {
       <Text style={styles.favButtonText}>{isFavourite ? "Remove favourite" : "Add to favourites"}</Text>
     </TouchableOpacity>
   );
+
+  const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    try {
+      // prefer movie title from parsed data, then route param, fallback to generic
+      const title = movie?.title ?? route.params?.movieTitle ?? "Movie";
+      navigation.setOptions({ title });
+    } catch {
+      // ignore
+    }
+  }, [navigation, movie?.title, route.params?.movieTitle]);
 
   if (!movie) {
     return (

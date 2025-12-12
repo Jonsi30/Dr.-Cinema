@@ -1,5 +1,6 @@
+import { useNavigation } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
     FlatList,
@@ -21,11 +22,21 @@ export default function CinemaDetailScreen() {
     const params = useLocalSearchParams();
     const router = useRouter();
     const id = params?.id as string | undefined;
+    const navigation = useNavigation();
 
     const [cinema, setCinema] = useState<Cinema | null>(null);
     const [movies, setMovies] = useState<Movie[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Update the native header title to the cinema name when available
+    useLayoutEffect(() => {
+        try {
+            navigation.setOptions({ title: cinema?.name ?? "Cinema" });
+        } catch {
+            // ignore if navigation not available
+        }
+    }, [navigation, cinema?.name]);
 
     useEffect(() => {
         let mounted = true;
@@ -200,6 +211,7 @@ export default function CinemaDetailScreen() {
     };
 
     const addressString = getAddressString();
+
 
     const getWebsiteUrl = () => {
         if (!cinema.website) return null;

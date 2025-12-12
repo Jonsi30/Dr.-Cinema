@@ -4,7 +4,6 @@ import {
   ActivityIndicator,
   FlatList,
   StyleSheet,
-  Text,
   View,
 } from "react-native";
 import { fetchUpcomingMovies } from "../src/api/movies";
@@ -72,7 +71,6 @@ export default function UpcomingMovies() {
         <ActivityIndicator />
       ) : (
         <View style={styles.innerContainer}>
-          <Text style={styles.title}>Upcoming Movies</Text>
           <FlatList
             data={items || []}
             keyExtractor={(i, index) => `${String(i?.id ?? i?.title ?? 'upcoming')}-${index}`}
