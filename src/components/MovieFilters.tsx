@@ -66,7 +66,7 @@ export default function MovieFiltersComponent({ filters, onFiltersChange }: Movi
                 />
 
                 {/* Showtime Range */}
-                <Text style={styles.label}>Minimum Showtime (HH:MM)</Text>
+                <Text style={styles.label}>Showtime (HH:MM-HH:MM)</Text>
                 <TextInput
                 style={styles.input}
                 placeholder="e.g. 20:00"

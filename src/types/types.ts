@@ -100,7 +100,7 @@ export type MovieFilters = {
     title?: string;
     imdbRating?: { min: number; max: number };
     tomatoRating?: { min: number; max: number };
-    showtimeRange?: { start: string };
+    showtimeRange?: { start: string, end: string };
     actors?: string[];
     directors?: string[];
     pgRating?: string;

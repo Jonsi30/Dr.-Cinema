@@ -80,8 +80,9 @@ export function useMovies() {
                     return hours * 60 + minutes;
                 };
                 
-                const startMinutes = timeToMinutes(filters.showtimeRange.start);
-                const endMinutes = timeToMinutes(filters.showtimeRange.end);
+                let rangeParts = filters.showtimeRange.start.split('-');
+                const startMinutes = timeToMinutes(rangeParts[0]);  // e.g., "20:00" -> 1200
+                const endMinutes = rangeParts[1] ? timeToMinutes(rangeParts[1]) : 1439;
                 
                 // Check if any showtime starts within the range
                 const matches = movie.showtimes?.some((showtime: any) => {
