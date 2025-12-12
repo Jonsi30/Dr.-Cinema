@@ -1,10 +1,10 @@
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  View,
+    ActivityIndicator,
+    FlatList,
+    StyleSheet,
+    View,
 } from "react-native";
 import { fetchUpcomingMovies } from "../src/api/movies";
 import MovieCard from "../src/components/MovieCard";
@@ -36,17 +36,56 @@ export default function UpcomingMovies() {
       .finally(() => { if (mounted) setLoading(false); });
     return () => { mounted = false; };
   }, []);
-  // Helper: parse release timestamp for sorting
   const parseReleaseTimestamp = (raw?: string): number | null => {
     if (!raw) return null;
-    const dt = new Date(raw);
-    if (!Number.isNaN(dt.getTime())) return dt.getTime();
-    const cleaned = String(raw).replace(/\s+GMT.*$/i, "").trim();
-    const m = cleaned.match(/(\d{4}-\d{2}-\d{2})/);
-    if (m && m[1]) {
-      const dt2 = new Date(m[1]);
-      if (!Number.isNaN(dt2.getTime())) return dt2.getTime();
+    const s = String(raw).trim();
+
+    // Try native Date parsing first (handles ISO and many common formats)
+    const tryTs = Date.parse(s);
+    if (!Number.isNaN(tryTs)) return tryTs;
+
+    // Strip trailing GMT/zone clutter and try again
+    const cleaned = s.replace(/\s+GMT.*$/i, "").trim();
+    const tryTs2 = Date.parse(cleaned);
+    if (!Number.isNaN(tryTs2)) return tryTs2;
+
+    // Try explicit ISO-like YYYY-MM-DD or YYYY/MM/DD
+    const iso = cleaned.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+    if (iso) {
+      const y = Number(iso[1]);
+      const m = Number(iso[2]);
+      const d = Number(iso[3]);
+      const dt = new Date(y, m - 1, d);
+      if (!Number.isNaN(dt.getTime())) return dt.getTime();
     }
+
+    // Try common d/m/y or d.m.y formats
+    const dmy = cleaned.match(/(\d{1,2})[\.\/-](\d{1,2})[\.\/-](\d{4})/);
+    if (dmy) {
+      const d = Number(dmy[1]);
+      const m = Number(dmy[2]);
+      const y = Number(dmy[3]);
+      const dt = new Date(y, m - 1, d);
+      if (!Number.isNaN(dt.getTime())) return dt.getTime();
+    }
+
+    // Try month name + year (e.g. "Jan 2026" or "January 2026")
+    const monthYear = cleaned.match(/([A-Za-z]+)\s+(\d{4})/);
+    if (monthYear) {
+      const monthName = monthYear[1];
+      const y = Number(monthYear[2]);
+      const dt = new Date(`${monthName} 1, ${y}`);
+      if (!Number.isNaN(dt.getTime())) return dt.getTime();
+    }
+
+    // Fallback: extract year only and use Jan 1st of that year
+    const yearMatch = cleaned.match(/(19|20)\d{2}/);
+    if (yearMatch) {
+      const y = Number(yearMatch[0]);
+      const dt = new Date(y, 0, 1);
+      if (!Number.isNaN(dt.getTime())) return dt.getTime();
+    }
+
     return null;
   };
 
@@ -62,7 +101,7 @@ export default function UpcomingMovies() {
   };
 
   const renderItem = ({ item }: { item: UpcomingMovie }) => (
-    <MovieCard movie={item} onPress={() => handlePress(item)} showGenres={false} />
+    <MovieCard movie={item} onPress={() => handlePress(item)} showGenres={false} showYear={false} />
   );
 
   return (
@@ -81,7 +120,6 @@ export default function UpcomingMovies() {
         </View>
       )}
 
-      {/* Trailer modal removed — Upcoming list now navigates to Movie page for details */}
     </View>
   );
 }

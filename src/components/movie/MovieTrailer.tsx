@@ -306,5 +306,4 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.border,
         marginTop: SPACING.sm,
     },
-    // removed inline webplayer styles
 });
