@@ -47,6 +47,8 @@ export default function MovieCard({ movie, onPress, actions, showGenres = true, 
             {(movie as any).omdb?.imdbRating && (
             <Text style={styles.rating}>⭐ {(movie as any).omdb.imdbRating}/10</Text>
             )}
+            
+            <Text style={styles.genres}>{movie.genres}</Text>
         </View>
         {actions ? <View style={styles.actions}>{actions}</View> : null}
         </TouchableOpacity>

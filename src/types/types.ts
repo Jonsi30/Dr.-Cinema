@@ -5,9 +5,9 @@ export interface Ratings {
 }
 
 export interface Trailer {
-	url: string;
-	type?: string;
-	thumbnail?: string;
+    url: string;
+    type?: string;
+    thumbnail?: string;
 }
 
 export interface ShowTime {
@@ -20,24 +20,27 @@ export interface ShowTime {
 }
 
 export interface Movie {
-	id: string;
-	title: string;
-	year?: number;
-	poster?: string;
-	plot?: string;
-	durationMinutes?: number;
-	rating?: string;
-	directors?: string[];
-	writers?: string[];
-	actors?: string[];
-	genres?: string[];
-	country?: string;
-	contentRating?: string;
-	trailers?: Trailer[];
-	showtimes?: ShowTime[];
-	schedule?: ShowTime[];
-	ratings?: Ratings;
-}
+    id: number;
+    title: string;
+    plot?: string;
+    year?: string;
+    poster?: string;
+    durationMinutes?: number;
+    omdb?: {
+        imdbRating: string;
+        tomatoRating: string;
+        rated: string;
+    };
+    actors: string[];
+    directors: string[];
+    genres: string[];
+    showtimes: {
+        time: string;
+        theater: { id: number };
+    }[];
+    country?: string;
+    ratings?: Ratings;
+};
 
 export interface UpcomingMovie extends Movie {
 	releaseDate?: string;
@@ -63,16 +66,42 @@ export interface Cinema {
 }
 
 export type Theater = {
-  _id?: string;
-  id?: string;
-  name: string;
-  website?: string;
-  description?: string;
-  address?: {
-    street?: string;
-    city?: string;
-    zipcode?: string;
-  } | string;
-  phone?: string;
-  [k: string]: any;
+    _id?: string;
+    id?: string;
+    name: string;
+    website?: string;
+    description?: string;
+    address?: {
+      street?: string;
+      city?: string;
+      zipcode?: string;
+    } | string;
+    phone?: string;
+    [k: string]: any;
+  };
+
+export type Genre = {
+    ID: number;
+    Name:string;
+    NameEN: string;
 };
+
+export type Rating = {
+    Source: string;
+    Value: string;
+};
+
+export type Showtime = {
+    time: string;
+};
+
+
+export type MovieFilters = {
+    title?: string;
+    imdbRating?: { min: number; max: number };
+    tomatoRating?: { min: number; max: number };
+    showtimeRange?: { start: string, end: string };
+    actors?: string[];
+    directors?: string[];
+    pgRating?: string;
+}

@@ -53,64 +53,28 @@ export default function MovieFiltersComponent({ filters, onFiltersChange }: Movi
                 />
 
                 {/* IMDB Rating */}
-                <Text style={styles.label}>IMDB Rating (min)</Text>
+                <Text style={styles.label}>Minimum IMDB Rating</Text>
                 <TextInput
-                    style={styles.input}
-                    placeholder="e.g. 7.0"
-                    keyboardType="numeric"
-                    value={localFilters.imdbRating?.min.toString() || ''}
-                    onChangeText={(text) => setLocalFilters({ 
+                style={styles.input}
+                placeholder="e.g. 7.0"
+                keyboardType="numeric"
+                value={localFilters.imdbRating?.min.toString() || ''}
+                onChangeText={(text) => setLocalFilters({ 
                     ...localFilters, 
-                    imdbRating: { 
-                        min: parseFloat(text) || 0, 
-                        max: localFilters.imdbRating?.max || 10 
-                    }
-                    })}
-                />
-
-                {/* Rotten Tomatoes Rating */}
-                <Text style={styles.label}>Rotten Tomatoes Rating (min %)</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="e.g. 80"
-                    keyboardType="numeric"
-                    value={localFilters.tomatoRating?.min.toString() || ''}
-                    onChangeText={(text) => setLocalFilters({ 
-                    ...localFilters, 
-                    tomatoRating: { 
-                        min: parseFloat(text) || 0, 
-                        max: localFilters.tomatoRating?.max || 100 
-                    }
-                    })}
+                    imdbRating: { min: parseFloat(text) || 0, max: 10 }
+                })}
                 />
 
                 {/* Showtime Range */}
-                <Text style={styles.label}>Showtime From (HH:MM)</Text>
+                <Text style={styles.label}>Showtime (HH:MM-HH:MM)</Text>
                 <TextInput
-                    style={styles.input}
-                    placeholder="e.g. 20:00"
-                    value={localFilters.showtimeRange?.start || ''}
-                    onChangeText={(text) => setLocalFilters({ 
+                style={styles.input}
+                placeholder="e.g. 20:00"
+                value={localFilters.showtimeRange?.start || ''}
+                onChangeText={(text) => setLocalFilters({ 
                     ...localFilters, 
-                    showtimeRange: { 
-                        start: text, 
-                        end: localFilters.showtimeRange?.end || '23:59' 
-                    }
-                    })}
-                />
-                
-                <Text style={styles.label}>Showtime To (HH:MM)</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="e.g. 22:00"
-                    value={localFilters.showtimeRange?.end || ''}
-                    onChangeText={(text) => setLocalFilters({ 
-                    ...localFilters, 
-                    showtimeRange: { 
-                        start: localFilters.showtimeRange?.start || '00:00', 
-                        end: text 
-                    }
-                    })}
+                    showtimeRange: { start: text }
+                })}
                 />
 
                 {/* Actor Filter */}
@@ -141,7 +105,7 @@ export default function MovieFiltersComponent({ filters, onFiltersChange }: Movi
                 <Text style={styles.label}>PG Rating</Text>
                 <TextInput
                     style={styles.input}
-                    placeholder="e.g. PG-13, R"
+                    placeholder="9 ára, 12 ára, 16 ára"
                     value={localFilters.pgRating || ''}
                     onChangeText={(text) => setLocalFilters({ ...localFilters, pgRating: text })}
                 />
