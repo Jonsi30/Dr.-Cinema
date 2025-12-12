@@ -31,7 +31,6 @@ export const MovieTrailer: React.FC<MovieTrailerProps> = ({ trailers }) => {
 
     const getTrailerUrl = (t: any): string | undefined => {
         if (!t) return undefined;
-        // If this is a wrapper with a `results` array (TMDB style), pick the best
         if (Array.isArray(t.results) && t.results.length > 0) {
             const results = t.results.filter(Boolean);
 
@@ -50,50 +49,62 @@ export const MovieTrailer: React.FC<MovieTrailerProps> = ({ trailers }) => {
             };
 
             if (ytResults.length > 0) {
-                // sort descending by heuristic score
                 ytResults.sort((a: any, b: any) => scoreEntry(b) - scoreEntry(a));
                 const best = ytResults[0];
-                console.warn("Selected best YouTube trailer entry:", best);
-                if (best.url && typeof best.url === "string") return best.url;
-                if (best.key && typeof best.key === "string") return `https://www.youtube.com/watch?v=${best.key}`;
-                if (best.embed && typeof best.embed === "string") return best.embed;
+                if (best.key && typeof best.key === "string") {
+                    return `https://www.youtube.com/watch?v=${best.key}`;
+                }
+
+                // If the API already provided a URL, attempt to convert embed links to watch URLs
+                if (best.url && typeof best.url === "string") {
+                    // Try to extract a youtube id from the provided url and convert to watch URL
+                    const maybeId = getYouTubeId(best.url as string);
+                    if (maybeId) return `https://www.youtube.com/watch?v=${maybeId}`;
+                    return best.url;
+                }
+
+                // Last fallback: embed field (may be an iframe src)
+                if (best.embed && typeof best.embed === "string") {
+                    const maybeId = getYouTubeId(best.embed as string);
+                    if (maybeId) return `https://www.youtube.com/watch?v=${maybeId}`;
+                    return best.embed;
+                }
             }
 
             // Fallback: prefer any entry that already has a usable URL
             for (const entry of results) {
                 if (entry?.url && typeof entry.url === "string") return entry.url;
             }
-
-            // Last resort: try to construct from any YouTube key in results
-            for (const entry of results) {
-                if (entry?.key && typeof entry.key === "string") return `https://www.youtube.com/watch?v=${entry.key}`;
-            }
         }
 
-        const candidates = [
-            "url",
-            "video",
-            "videoUrl",
-            "src",
-            "link",
-            "href",
-            "embed",
-            "key",
-        ];
+        const keys = Object.keys(t || {});
+        for (const k of keys) {
+            try {
+                const v = (t as any)[k];
+                if (!v) continue;
 
-        for (const k of candidates) {
-            const v = t[k];
-            if (!v) continue;
-            if (typeof v === "string" && v.trim()) {
-                // if it's a plain YouTube key (e.g. 'abc123'), build a watch url
-                if (k === "key") return `https://www.youtube.com/watch?v=${v.trim()}`;
-                return v.trim();
-            }
-            if (v && typeof v === "object") {
-                // nested shape like { url: '...' } or { href: '...' }
-                for (const nk of ["url", "href", "src"]) {
-                    if (typeof v[nk] === "string" && v[nk].trim()) return v[nk].trim();
+                if (typeof v === "string" && v.trim()) {
+                    const trimmed = v.trim();
+                    // if it's a plain YouTube key (e.g. 'abc123'), build a watch url
+                    if (k === "key") {
+                        console.warn("Resolved trailer key from property:", k);
+                        return `https://www.youtube.com/watch?v=${trimmed}`;
+                    }
+                    console.warn("Resolved trailer url from property:", k);
+                    return trimmed;
                 }
+
+                if (v && typeof v === "object") {
+                    // nested shape like { url: '...' } or { href: '...' }
+                    for (const nk of ["url", "href", "src"]) {
+                        if (typeof v[nk] === "string" && v[nk].trim()) {
+                            console.warn("Resolved trailer url from nested property:", `${k}.${nk}`);
+                            return v[nk].trim();
+                        }
+                    }
+                }
+            } catch {
+                // ignore and continue searching other keys
             }
         }
 
@@ -109,6 +120,9 @@ export const MovieTrailer: React.FC<MovieTrailerProps> = ({ trailers }) => {
     };
 
     const resolvedUrl = getTrailerUrl(trailer as any);
+    if (!resolvedUrl) {
+        console.warn("Trailer resolver returned no URL for trailer object:", trailer);
+    }
 
     const isYouTube = (url?: string) => {
         if (!url) return false;
@@ -206,9 +220,8 @@ export const MovieTrailer: React.FC<MovieTrailerProps> = ({ trailers }) => {
 
     const handlePress = () => {
         const url = resolvedUrl;
-        console.warn("Trailer press, resolved url:", url, "trailer:", trailer);
         if (!url) {
-            alert("Trailer URL not available");
+            alert("No trailer available for this movie");
             return;
         }
 
@@ -231,7 +244,7 @@ export const MovieTrailer: React.FC<MovieTrailerProps> = ({ trailers }) => {
         <View style={styles.container}>
             <Text style={styles.label}>Trailer</Text>
 
-            {isYouTube(resolvedUrl) ? (
+            {resolvedUrl && isYouTube(resolvedUrl) ? (
                 <Text style={styles.watchButton} onPress={handlePress}>
                     Watch Trailer
                 </Text>
@@ -250,10 +263,12 @@ export const MovieTrailer: React.FC<MovieTrailerProps> = ({ trailers }) => {
                         {isPlaying ? "Pause" : "Play"}
                     </Text>
                 </View>
-            ) : (
+            ) : resolvedUrl ? (
                 <Text style={styles.watchButton} onPress={() => handleOpenInBrowser(resolvedUrl)}>
                     Watch Trailer
                 </Text>
+            ) : (
+                <Text style={styles.emptyState}>Trailer URL not available</Text>
             )}
         </View>
     );

@@ -1,7 +1,23 @@
-const BASE_URL = "https://api.kvikmyndir.is";
+let BASE_URL = "https://api.kvikmyndir.is";
 
-const username = process.env.EXPO_PUBLIC_KVIKMYNDIR_USERNAME;
-const password = process.env.EXPO_PUBLIC_KVIKMYNDIR_PASSWORD;
+// Allow runtime overrides so app can inject secrets after bundling
+let RUNTIME_USERNAME: string | undefined = undefined;
+let RUNTIME_PASSWORD: string | undefined = undefined;
+
+const username = () => RUNTIME_USERNAME ?? process.env.EXPO_PUBLIC_KVIKMYNDIR_USERNAME;
+const password = () => RUNTIME_PASSWORD ?? process.env.EXPO_PUBLIC_KVIKMYNDIR_PASSWORD;
+
+export type ApiClientConfig = {
+	apiBase?: string;
+	username?: string;
+	password?: string;
+};
+
+export function setApiClientConfig(cfg: ApiClientConfig) {
+	if (cfg.apiBase) BASE_URL = cfg.apiBase;
+	if (cfg.username) RUNTIME_USERNAME = cfg.username;
+	if (cfg.password) RUNTIME_PASSWORD = cfg.password;
+}
 
 type QueryValue = string | number | boolean | null | undefined;
 type Query = Record<string, QueryValue>;
@@ -12,13 +28,16 @@ let cachedExpiry: number | null = null;
 const TOKEN_FALLBACK_TTL_MS = 1000 * 60 * 60 * 23; // assume 23h if API omits expiresIn
 
 const ensureCredentials = () => {
-	if (!username || !password) {
+	const u = username();
+	const p = password();
+
+	if (!u || !p) {
 		throw new Error(
-			"Missing kvikmyndir.is credentials. Set EXPO_PUBLIC_KVIKMYNDIR_USERNAME and EXPO_PUBLIC_KVIKMYNDIR_PASSWORD."
+			"Missing kvikmyndir.is credentials. Set EXPO_PUBLIC_KVIKMYNDIR_USERNAME and EXPO_PUBLIC_KVIKMYNDIR_PASSWORD or call setApiClientConfig()."
 		);
 	}
 
-	return { username, password };
+	return { username: u, password: p };
 };
 
 const encodeBase64 = (value: string) => {

@@ -36,11 +36,19 @@ export const MovieHeader: React.FC<MovieHeaderProps> = ({
         else bgColor = styles.badgeRed.backgroundColor;
     }
     const badgeText = typeof r === "string" ? r : r !== undefined ? String(r) : "N/A";
+    // If the rating is "Öllum leyfð", use green badge
+    try {
+        const bt = String(badgeText || "").toLowerCase();
+        const isAllAges = (/öllum/.test(bt) && bt.includes("leyf"));
+        if (isAllAges) bgColor = styles.badgeGreen.backgroundColor;
+    } catch {
+        /* ignore */
+    }
 
     return (
         <View style={styles.container}>
             {poster ? (
-                <Image source={{ uri: poster }} style={styles.poster} />
+                <Image source={{ uri: poster }} style={styles.poster} resizeMode="contain" />
             ) : null}
 
             <View style={styles.info}>
@@ -60,7 +68,6 @@ export const MovieHeader: React.FC<MovieHeaderProps> = ({
                         <Text style={styles.detail}>{duration} min</Text>
                     ) : null}
                     {country ? <Text style={styles.detail}>{country}</Text> : null}
-                    {rating ? <Text style={styles.detail}>{rating}</Text> : null}
                 </View>
             </View>
         </View>
@@ -76,10 +83,12 @@ const styles = StyleSheet.create({
     },
     poster: {
         width: "100%",
-        height: 300,
+        aspectRatio: 2 / 3,
+        // Let the poster scale to fit without cropping; keep rounded corners
         borderRadius: 8,
         marginBottom: SPACING.md,
         backgroundColor: COLORS.border,
+        overflow: 'hidden',
     },
     info: {
         gap: SPACING.sm,
@@ -106,11 +115,11 @@ const styles = StyleSheet.create({
     },
     detail: {
         fontSize: FONT_SIZES.small,
-        color: COLORS.textSecondary,
-        backgroundColor: COLORS.border,
+        color: COLORS.textPrimary,
+        backgroundColor: '#e9e9e9',
         paddingHorizontal: SPACING.sm,
-        paddingVertical: 2,
-        borderRadius: 4,
+        paddingVertical: 4,
+        borderRadius: 6,
     },
     badge: {
         width: 40,

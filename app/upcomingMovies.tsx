@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -7,10 +8,9 @@ import {
   View,
 } from "react-native";
 import { fetchUpcomingMovies } from "../src/api/movies";
+import MovieCard from "../src/components/MovieCard";
 import { COLORS, FONT_SIZES, SPACING } from "../src/constants/theme";
 import { UpcomingMovie } from "../src/types/types";
-import MovieCard from "../src/components/MovieCard";
-import { useRouter } from "expo-router";
 
 export default function UpcomingMovies() {
   const router = useRouter();

@@ -1,5 +1,16 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { setApiClientConfig } from "../src/api/client";
+
+// Inject runtime credentials from process.env (safe for local dev).
+// For production, use secure secrets and avoid committing values.
+setApiClientConfig({
+  username: process.env.EXPO_PUBLIC_KVIKMYNDIR_USERNAME,
+  password: process.env.EXPO_PUBLIC_KVIKMYNDIR_PASSWORD,
+});
+// Helpful debug logs during development. Remove or guard in production.
+console.log("KVIK username:", process.env.EXPO_PUBLIC_KVIKMYNDIR_USERNAME);
+console.log("KVIK password present:", !!process.env.EXPO_PUBLIC_KVIKMYNDIR_PASSWORD);
 
 export default function RootLayout() {
   return (
