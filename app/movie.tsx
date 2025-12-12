@@ -4,6 +4,8 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { MovieHeader } from "../src/components/movie/MovieHeader";
 import { MovieMeta } from "../src/components/movie/MovieMeta";
 import { MoviePlot } from "../src/components/movie/MoviePlot";
+import { MovieReviews } from "../src/components/movie/MovieReviews";
+import { MovieShareButton } from "../src/components/movie/MovieShareButton";
 import { MovieShowtimes } from "../src/components/movie/MovieShowtimes";
 import { MovieTrailer } from "../src/components/movie/MovieTrailer";
 import { COLORS, SPACING } from "../src/constants/theme";
@@ -67,7 +69,7 @@ export default function MoviePage() {
         duration={movie.durationMinutes}
         country={movie.country}
       />
-
+      
       <MovieMeta
         directors={movie.directors}
         writers={movie.writers}
@@ -83,6 +85,14 @@ export default function MoviePage() {
       ) : null}
 
       <MovieTrailer trailers={movie.trailers} />
+
+      <MovieReviews movieId={movie.id || movie.title} />
+
+      <MovieShareButton
+        movieId={movie.id!}
+        title={movie.title}
+        year={movie.year}
+      />
     </ScrollView>
   );
 }
