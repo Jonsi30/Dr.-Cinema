@@ -8,9 +8,10 @@ type MovieCardProps = {
     onPress: () => void;
     actions?: React.ReactNode;
     showGenres?: boolean;
+    onLongPress?: () => void;
 };
 
-export default function MovieCard({ movie, onPress, actions, showGenres = true }: MovieCardProps) {
+export default function MovieCard({ movie, onPress, actions, showGenres = true, onLongPress }: MovieCardProps) {
     const rawRelease = (movie as any).releaseDate ?? (movie as any)["release-dateIS"] ?? (movie as any)["release-date"] ?? (movie as any).release_date;
     let releaseDateFormatted: string | null = null;
     if (rawRelease) {
@@ -28,7 +29,7 @@ export default function MovieCard({ movie, onPress, actions, showGenres = true }
         }
     }
     return (
-        <TouchableOpacity style={styles.card} onPress={onPress}>
+        <TouchableOpacity style={styles.card} onPress={onPress} onLongPress={onLongPress}>
         <Image 
             source={{ uri: movie.poster }} 
             style={styles.poster}

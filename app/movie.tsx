@@ -1,6 +1,6 @@
 import { useRoute } from "@react-navigation/native";
 import { useMemo } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { MovieHeader } from "../src/components/movie/MovieHeader";
 import { MovieMeta } from "../src/components/movie/MovieMeta";
 import { MoviePlot } from "../src/components/movie/MoviePlot";
@@ -9,6 +9,7 @@ import { MovieShareButton } from "../src/components/movie/MovieShareButton";
 import { MovieShowtimes } from "../src/components/movie/MovieShowtimes";
 import { MovieTrailer } from "../src/components/movie/MovieTrailer";
 import { COLORS, SPACING } from "../src/constants/theme";
+import useFavourites from "../src/hooks/useFavourites";
 import { Movie } from "../src/types/types";
 
 export default function MoviePage() {
@@ -51,6 +52,35 @@ export default function MoviePage() {
     return null;
   }, [route.params?.movieData]);
 
+  const { favourites, add, remove } = useFavourites();
+
+  const isFavourite = useMemo(() => {
+    try {
+      return favourites.some((f) => f.id === movie?.id);
+    } catch {
+      return false;
+    }
+  }, [favourites, movie?.id]);
+
+  const FavouriteAction = (
+    <TouchableOpacity
+      onPress={async () => {
+        if (!movie) return;
+        if (isFavourite) {
+          Alert.alert("Remove favourite", `Remove ${movie.title ?? "this movie"} from favourites?`, [
+            { text: "Cancel", style: "cancel" },
+            { text: "Remove", style: "destructive", onPress: () => remove(movie.id || movie.title) },
+          ]);
+        } else {
+          await add(movie);
+        }
+      }}
+      style={[styles.favButton, isFavourite ? styles.favButtonDanger : undefined]}
+    >
+      <Text style={styles.favButtonText}>{isFavourite ? "Remove favourite" : "Add to favourites"}</Text>
+    </TouchableOpacity>
+  );
+
   if (!movie) {
     return (
       <View style={styles.centerContainer}>
@@ -58,7 +88,7 @@ export default function MoviePage() {
       </View>
     );
   }
-
+ 
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
@@ -69,6 +99,7 @@ export default function MoviePage() {
         rating={movie.rating}
         duration={movie.durationMinutes}
         country={movie.country}
+        actions={FavouriteAction}
       />
       
       <MovieMeta
@@ -115,5 +146,18 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 16,
     color: COLORS.textSecondary,
+  },
+  favButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  favButtonDanger: {
+    backgroundColor: '#d9534f',
+  },
+  favButtonText: {
+    color: COLORS.white,
+    fontWeight: '600',
   },
 });
