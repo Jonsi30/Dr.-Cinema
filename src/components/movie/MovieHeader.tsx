@@ -9,6 +9,7 @@ interface MovieHeaderProps {
     rating?: string;
     duration?: number;
     country?: string;
+    actions?: React.ReactNode;
 }
 
 export const MovieHeader: React.FC<MovieHeaderProps> = ({
@@ -18,6 +19,7 @@ export const MovieHeader: React.FC<MovieHeaderProps> = ({
     rating,
     duration,
     country,
+    actions,
 }) => {
     // determine numeric age from rating
     const extractNum = (s?: string): number | null => {
@@ -69,6 +71,7 @@ export const MovieHeader: React.FC<MovieHeaderProps> = ({
                     ) : null}
                     {country ? <Text style={styles.detail}>{country}</Text> : null}
                 </View>
+                {actions ? <View style={styles.actionsRow}>{actions}</View> : null}
             </View>
         </View>
     );
@@ -150,4 +153,8 @@ const styles = StyleSheet.create({
     badgeYellow: { backgroundColor: '#FFC107' },
     badgeRed: { backgroundColor: '#F44336' },
     badgeGray: { backgroundColor: '#9E9E9E' },
+    actionsRow: {
+        marginTop: SPACING.sm,
+        alignItems: 'center',
+    },
 });

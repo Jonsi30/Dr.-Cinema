@@ -36,7 +36,6 @@ export const fetchMovies = async (filters?: MovieFilters) => {
   const uniqueRaw = movies.filter((movie) => {
     const id = String(movie.id || movie._id);
     if (seen.has(id)) {
-      console.warn(`Duplicate movie detected: ${movie.title} (ID: ${id})`);
       return false;
     }
     seen.add(id);
@@ -206,7 +205,7 @@ export const fetchMovies = async (filters?: MovieFilters) => {
 
   const unique = await Promise.all(mappedPromises);
   
-  console.log(`fetchMovies: ${movies.length} total, ${unique.length} unique after deduplication`);
+  // fetchMovies summary log removed to reduce noisy debug output in production/dev logs.
   return unique;
 };
 

@@ -1,13 +1,15 @@
 import { useRoute } from "@react-navigation/native";
-import { useMemo } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { fetchMovieShowtimes } from '../src/api/movies';
 import { MovieHeader } from "../src/components/movie/MovieHeader";
 import { MovieMeta } from "../src/components/movie/MovieMeta";
 import { MoviePlot } from "../src/components/movie/MoviePlot";
 import { MovieShowtimes } from "../src/components/movie/MovieShowtimes";
 import { MovieTrailer } from "../src/components/movie/MovieTrailer";
 import { COLORS, SPACING } from "../src/constants/theme";
-import { Movie } from "../src/types/types";
+import useFavourites from '../src/hooks/useFavourites';
+import { Movie, ShowTime } from "../src/types/types";
 
 export default function MoviePage() {
     const route = useRoute() as {
@@ -24,6 +26,10 @@ export default function MoviePage() {
             try {
                 const data = JSON.parse(route.params.movieData);
                 const cinemaId = route.params?.cinemaId;
+                // DEBUG: show incoming cinemaId when navigating from a cinema
+                try {
+                    console.log('[MoviePage] useMemo arrived with cinemaId=', cinemaId);
+                } catch {}
 
                 // Normalize showtimes: prefer 'schedule' or flatten 'showtimes'
                 let showtimes: any[] | undefined = undefined;
@@ -35,18 +41,21 @@ export default function MoviePage() {
                     );
                 }
 
-                // If a cinemaId was provided (user selected a cinema when opening the movie), filter to that cinema
+                // If a cinemaId was provided (user selected a cinema when opening the movie), filter to that cinema.
+                // Be permissive about where the showtime's cinema id might be stored.
                 if (cinemaId && Array.isArray(showtimes)) {
+                    // Project API uses a primitive `cinemaId` on showtimes.
+                    // Fall back to `cinema.id` only if `cinemaId` is missing.
+                    const extractShowtimeCinemaId = (s: any) => {
+                        if (!s) return undefined;
+                        if (s.cinemaId !== undefined) return s.cinemaId;
+                        if (s.cinema && (s.cinema.id !== undefined)) return s.cinema.id;
+                        return undefined;
+                    };
+
                     showtimes = showtimes.filter((s: any) => {
-                        const stCinema =
-                            s.cinema?.id ??
-                            s.cinemaId ??
-                            s.theater?.id ??
-                            s.theaterId;
-                        return (
-                            stCinema !== undefined &&
-                            String(stCinema) === String(cinemaId)
-                        );
+                        const stCinema = extractShowtimeCinemaId(s);
+                        return stCinema !== undefined && String(stCinema) === String(cinemaId);
                     });
                 }
 
@@ -88,6 +97,57 @@ export default function MoviePage() {
         return null;
     }, [route.params?.movieData, route.params?.cinemaId]);
 
+    const [extraShowtimes, setExtraShowtimes] = useState<ShowTime[] | null>(null);
+
+
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+            if (!movie) return;
+            const cinemaId = route.params?.cinemaId;
+            const existing = (movie.showtimes || movie.schedule) as any[] | undefined;
+
+            // DEBUG: log params and showtime state when page mounts
+            try {
+                console.log('[MoviePage] params=', route.params, 'movie.id=', (movie as any).id ?? (movie as any)._id ?? route.params?.movieId, 'existingShowtimes=', existing?.length ?? 0);
+            } catch {}
+            if (!cinemaId) return;
+            if (existing && existing.length > 0) return; // already have showtimes
+
+            const mid = (movie as any).id ?? (movie as any)._id ?? (route.params?.movieId ?? undefined);
+            if (!mid) return;
+            try {
+                console.log('[MoviePage] fetching showtimes for', String(mid), 'cinemaId=', String(cinemaId));
+                const fetched = await fetchMovieShowtimes(String(mid), String(cinemaId));
+                console.log('[MoviePage] fetched showtimes count=', Array.isArray(fetched) ? fetched.length : 'not-array');
+
+                let fallback: ShowTime[] | undefined;
+                if (Array.isArray(fetched) && fetched.length === 0) {
+                    try {
+                        console.log('[MoviePage] trying fallback fetch without cinema filter');
+                        const fb = await fetchMovieShowtimes(String(mid));
+                        console.log('[MoviePage] fallback fetched count=', Array.isArray(fb) ? fb.length : 'not-array');
+                        if (Array.isArray(fb) && fb.length > 0) {
+                            fallback = fb as ShowTime[];
+                        }
+                    } catch (e) {
+                        console.warn('Fallback showtimes fetch failed', e);
+                    }
+                }
+
+                const toUse = (Array.isArray(fetched) && fetched.length > 0) ? fetched as ShowTime[] : fallback;
+                if (toUse && toUse.length > 0) {
+                    if (!mounted) return;
+                    setExtraShowtimes(toUse as ShowTime[]);
+                }
+            } catch (err) {
+                // ignore failure — MovieShowtimes will show empty state
+                console.warn('Failed to fetch showtimes for movie', err);
+            }
+        })();
+        return () => { mounted = false; };
+    }, [movie, route.params?.cinemaId, route.params?.movieId, route.params]);
+
     if (!movie) {
         return (
             <View style={styles.centerContainer}>
@@ -110,6 +170,10 @@ export default function MoviePage() {
                 country={movie.country}
             />
 
+            <View style={styles.favRow}>
+                <AddToFavButton movie={movie} />
+            </View>
+
             <MovieMeta
                 directors={movie.directors}
                 writers={movie.writers}
@@ -123,7 +187,7 @@ export default function MoviePage() {
             {(movie.showtimes || movie.schedule) &&
             (movie.showtimes?.length || movie.schedule?.length) ? (
                 <MovieShowtimes
-                    showtimes={(movie.showtimes || movie.schedule) as any}
+                    showtimes={(extraShowtimes ?? (movie.showtimes || movie.schedule)) as any}
                 />
             ) : null}
 
@@ -132,6 +196,43 @@ export default function MoviePage() {
     );
 }
 
+function AddToFavButton({ movie }: { movie: Movie }) {
+    const { favourites, add } = useFavourites();
+    const [msg, setMsg] = useState<string | null>(null);
+    const [busy, setBusy] = useState(false);
+
+    const isFav = favourites.some((m) => m.id === movie.id);
+
+    const handleAdd = async () => {
+        if (busy) return;
+        setBusy(true);
+        try {
+            if (isFav) {
+                setMsg('Already in favourites');
+            } else {
+                await add(movie);
+                setMsg('Added to favourites');
+            }
+        } catch (err) {
+            console.warn('Failed to add favourite', err);
+            setMsg('Failed to add');
+        } finally {
+            setBusy(false);
+            setTimeout(() => setMsg(null), 1600);
+        }
+    };
+
+    return (
+        <TouchableOpacity
+            onPress={handleAdd}
+            style={[styles.favButton, isFav ? styles.favButtonActive : null]}
+            disabled={busy}
+        >
+            <Text style={styles.favButtonText}>{isFav ? 'In Favourites' : 'Add to Favourites'}</Text>
+            {msg ? <Text style={styles.favMsg}>{msg}</Text> : null}
+        </TouchableOpacity>
+    );
+}
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -149,5 +250,31 @@ const styles = StyleSheet.create({
     errorText: {
         fontSize: 16,
         color: COLORS.textSecondary,
+    },
+    favRow: {
+        paddingHorizontal: SPACING.lg,
+        paddingVertical: SPACING.sm,
+        alignItems: 'center',
+        marginBottom: SPACING.sm,
+    },
+    favButton: {
+        backgroundColor: COLORS.primary,
+        paddingVertical: SPACING.sm,
+        paddingHorizontal: SPACING.md,
+        borderRadius: 8,
+        alignItems: 'center',
+        width: '80%',
+    },
+    favButtonActive: {
+        backgroundColor: '#888',
+    },
+    favButtonText: {
+        color: COLORS.white,
+        fontWeight: '600',
+    },
+    favMsg: {
+        marginTop: SPACING.xs,
+        color: COLORS.textSecondary,
+        fontSize: 12,
     },
 });

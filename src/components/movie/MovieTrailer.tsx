@@ -296,6 +296,8 @@ const styles = StyleSheet.create({
         fontSize: FONT_SIZES.medium,
         color: COLORS.primary,
         fontWeight: "600",
+        alignSelf: 'center',
+        marginTop: SPACING.sm,
     },
     video: {
         width: "100%",
