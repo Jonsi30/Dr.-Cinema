@@ -40,7 +40,6 @@ export default function HomeScreen() {
         // Go through each movie and its showtimes
         uniqueMovies.forEach(movie => {
     
-            // Track which theaters we've added this movie to
             const addedToTheaters = new Set<number>();
     
             movie.showtimes.forEach((showtime: any) => {
@@ -53,7 +52,6 @@ export default function HomeScreen() {
             });
         });
     
-        // Log how many movies per theater
         Object.keys(theaterMoviesMap).forEach(theaterId => {
             console.log(`Theater ${theaterId}:`, theaterMoviesMap[Number(theaterId)].length, 'movies');
         });
@@ -65,7 +63,7 @@ export default function HomeScreen() {
             theaterId: theater.id,
             data: theaterMoviesMap[theater.id] || [],
             }))
-            .filter(section => section.data.length > 0); // Only include theaters with movies
+            .filter(section => section.data.length > 0); 
     
         console.log('Sections created:', sections.length);
         return sections;
@@ -87,7 +85,6 @@ export default function HomeScreen() {
             <Text style={styles.title}>Dr. Cinema</Text>
             <Text style={styles.subtitle}>{movies.length} movies at {sections.length} cinemas</Text>
             
-            {/* Filter Button/Modal */}
             <MovieFiltersComponent 
                 filters={filters}
                 onFiltersChange={setFilters}

@@ -14,10 +14,10 @@ export function useMovies() {
     }, []);  // Only load once
 
     const loadMoviesAndTheaters = async () => {
-        setLoading(true);  // Ensure loading starts
+        setLoading(true); 
         try {
             const [moviesData, theatersData] = await Promise.all([
-                getAllMovies(),  // No filters for now
+                getAllMovies(),  
                 getAllTheaters()
             ]);
             console.log("Movies fetched:", moviesData.length);
@@ -26,7 +26,7 @@ export function useMovies() {
         } catch (error) {
             console.error('Error loading data:', error);
         } finally {
-            setLoading(false);  // Always set to false
+            setLoading(false);  
             console.log("Loading set to false");
         }
     };
@@ -69,10 +69,9 @@ export function useMovies() {
                 if (!matches) return false;
             }
             if (filters.showtimeRange) {
-                // Updated helper to clean and convert time strings like "12.50 (s)" or "14:00 (ÍSL TAL r)" to minutes
                 const timeToMinutes = (time: string): number => {
                     if (!time) return 0;
-                    // Clean the string: replace dots with colons, and remove everything after the first space or parenthesis
+                    // replace dots with colons, and remove everything after the first space or parenthesis
                     let cleaned = time.replace('.', ':').split(' ')[0].split('(')[0].trim();
                     const match = cleaned.match(/^(\d{1,2}):(\d{2})$/);
                     if (!match) return 0;  // Invalid format, skip
@@ -84,9 +83,9 @@ export function useMovies() {
                 const startMinutes = timeToMinutes(filters.showtimeRange.start);
                 const endMinutes = timeToMinutes(filters.showtimeRange.end);
                 
-                // Check if any showtime STARTS within the range
+                // Check if any showtime starts within the range
                 const matches = movie.showtimes?.some((showtime: any) => {
-                    const showtimeStr = showtime.time;  // Extract from object
+                    const showtimeStr = showtime.time;  
                     if (!showtimeStr) return false;
                     const showtimeMinutes = timeToMinutes(showtimeStr);
                     console.log(`Checking showtime "${showtimeStr}" -> ${showtimeMinutes} minutes (range: ${startMinutes}-${endMinutes})`);
