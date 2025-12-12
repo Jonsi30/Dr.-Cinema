@@ -87,7 +87,6 @@ const styles = StyleSheet.create({
     poster: {
         width: "100%",
         aspectRatio: 2 / 3,
-        // Let the poster scale to fit without cropping; keep rounded corners
         borderRadius: 8,
         marginBottom: SPACING.md,
         backgroundColor: COLORS.border,

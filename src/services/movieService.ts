@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { Buffer } from 'buffer';
 import { Movie, MovieFilters } from '../types/types';
 
 const API_BASE = 'https://api.kvikmyndir.is';
@@ -22,13 +21,10 @@ async function getAuthToken(): Promise<string> {
       }
     }
 
-    const credentials = Buffer.from(`${USERNAME}:${PASSWORD}`).toString('base64');
-    
+    // Use axios `auth` option which works in React Native environments
     const response = await axios.post(`${API_BASE}/authenticate`, {}, {
-      headers: {
-        'Authorization': `Basic ${credentials}`,
-        'Content-Type': 'application/json'
-      }
+      auth: { username: USERNAME, password: PASSWORD },
+      headers: { 'Content-Type': 'application/json' },
     });
 
     const token = response.data.token;
@@ -102,28 +98,80 @@ export async function getAllMovies(filters?: MovieFilters) {
         if (data.length === 0) {
             console.log("No movies returned  check filters or API");
         }
-        const mappedMovies: Movie[] = data.map((apiMovie: any) => ({
+        const mappedMovies: Movie[] = data.map((apiMovie: any) => {
+          // normalize content rating
+          const rawRating = apiMovie.rating || apiMovie.rated || apiMovie.certificate || apiMovie.certificateIS || apiMovie.mpaaRating || undefined;
+          const normalizeRating = (r: any): string | undefined => {
+            if (r === undefined || r === null) return undefined;
+            if (typeof r === 'string') {
+              const s = r.trim();
+              return s === '' ? undefined : s;
+            }
+            if (typeof r === 'number') return String(r);
+            if (typeof r === 'object') {
+              const candidates = ['rating','name','Name','NameEN','value','code'];
+              for (const k of candidates) {
+                const v = (r as any)[k];
+                if (v !== undefined && v !== null) {
+                  if (typeof v === 'string') {
+                    const s = v.trim();
+                    if (s) return s;
+                  }
+                  if (typeof v === 'number') return String(v);
+                }
+              }
+              try { const s = JSON.stringify(r); return s.length ? s : undefined; } catch { return undefined; }
+            }
+            return undefined;
+          };
+
+          const ratingVal = normalizeRating(rawRating);
+
+          // build ratings object (imdb numeric, rottenTomatoes numeric or string)
+          const imdbVal = apiMovie.ratings?.imdb ? parseFloat(String(apiMovie.ratings.imdb)) : (apiMovie.omdb?.imdbRating ? parseFloat(String(apiMovie.omdb.imdbRating)) : undefined);
+          const rtRaw = apiMovie.ratings?.rotten_critics ?? apiMovie.ratings?.rotten_audience ?? apiMovie.omdb?.tomatoRating ?? undefined;
+          let rtVal: number | string | undefined;
+          if (rtRaw !== undefined && rtRaw !== null) {
+            const parsed = parseInt(String(rtRaw).replace(/[^0-9]/g, ''), 10);
+            if (!Number.isNaN(parsed)) rtVal = parsed;
+            else if (String(rtRaw).trim()) rtVal = String(rtRaw).trim();
+          }
+
+          const ratingsObj: any = {};
+          if (imdbVal !== undefined && !Number.isNaN(imdbVal)) ratingsObj.imdb = imdbVal;
+          if (rtVal !== undefined) ratingsObj.rottenTomatoes = rtVal;
+
+          return {
             id: parseInt(apiMovie._id || apiMovie.id, 10) || 0,
             title: apiMovie.title,
             plot: apiMovie.plot,
             year: apiMovie.year,
             poster: apiMovie.poster,
             durationMinutes: apiMovie.durationMinutes,
-            omdb: apiMovie.omdb?.length > 0 ? {
-                imdbRating: apiMovie.ratings?.imdb || "0",
-                tomatoRating: `${apiMovie.ratings?.rotten_critics || 0}%`,
-                rated: apiMovie.certificateIS || "",
-            } : undefined,
+            omdb: apiMovie.omdb ?? (apiMovie.ratings ? { imdbRating: apiMovie.ratings?.imdb ? String(apiMovie.ratings.imdb) : undefined, tomatoRating: apiMovie.ratings?.rotten_critics ? `${apiMovie.ratings.rotten_critics}%` : undefined, rated: apiMovie.certificateIS || undefined } : undefined),
+            rating: ratingVal,
+            ratings: Object.keys(ratingsObj).length > 0 ? ratingsObj : undefined,
             actors: apiMovie.actors_abridged?.map((actor: any) => actor.name || "").filter((a: string) => !!a) || [],
             directors: apiMovie.directors_abridged?.map((director: any) => director.name || "").filter((d: string) => !!d) || [],
-            genres: apiMovie.genres?.map((genre: any) => genre.name || "").filter((g: string) => !!g) || [],
+            genres: (apiMovie.genres ?? apiMovie.categories ?? apiMovie.tags)?.map((genre: any) => {
+              if (!genre && genre !== 0) return '';
+              if (typeof genre === 'string') return genre.trim();
+              if (typeof genre === 'object') return String(genre.name ?? genre.title ?? genre.label ?? genre.value ?? '').trim();
+              return String(genre).trim();
+            }).filter((g: string) => !!g) || [],
             showtimes: apiMovie.showtimes?.flatMap((showtime: any) => {
-                return showtime.schedule?.map((sched: any) => ({
-                    time: sched.time || "",
-                    theater: { id: showtime.cinema?.id || 0 }
-                })) || [];
+              return showtime.schedule?.map((sched: any) => ({
+                time: sched.time || sched.startsAt || sched.start || "",
+                theater: { id: showtime.cinema?.id || sched.cinemaId || 0 },
+                // common purchase link fields: purchaseUrl, purchase_url, purchase, url
+                purchaseUrl: sched.purchaseUrl || sched.purchase_url || sched.purchase || sched.url || showtime.purchaseUrl || showtime.purchase_url || undefined,
+                purchase_url: sched.purchase_url || sched.purchaseUrl || sched.purchase || sched.url || showtime.purchase_url || showtime.purchaseUrl || undefined,
+                auditorium: sched.auditorium || sched.hall || sched.room || undefined,
+                info: sched.info || sched.note || undefined,
+              })) || [];
             }) || [],
-        }));
+          } as Movie;
+        });
         console.log("First mapped movie:", mappedMovies[1]);
         return mappedMovies;
     } catch (error) {
