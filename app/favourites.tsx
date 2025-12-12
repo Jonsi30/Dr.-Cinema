@@ -58,6 +58,7 @@ export default function FavouritesPage() {
                 <MovieCard
                   movie={item}
                   onPress={() => handleOpen(item)}
+                  onLongPress={drag}
                   actions={(
                     <View style={{ alignItems: 'center', justifyContent: 'center' }}>
                       <TouchableOpacity onPress={() => confirmRemove(item.id, item.title)}>
