@@ -1,6 +1,5 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import React from "react";
-import { Share, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { Alert, Share, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { COLORS, FONT_SIZES, SPACING } from "../../constants/theme";
 
 interface MovieShareButtonProps {
@@ -9,41 +8,29 @@ interface MovieShareButtonProps {
     year?: string | number;
 }
 
-export const MovieShareButton: React.FC<MovieShareButtonProps> = ({ movieId, title, year }) => {
-    const handleShareMovie = async () => {
-        try {
-        const deepLink = `myapp://movie/${movieId}`;
-        const message = `Check out this movie: ${title}${year ? ` (${year})` : ""}\nWatch here: ${deepLink}`;
-        await Share.share({ message });
-        } catch (error) {
-        console.error("Error sharing movie:", error);
-        }
-    };
+function buildMovieLink(movieId: string) {
+    const scheme = "drcinema";
+    const appLink = `${scheme}://movie/${encodeURIComponent(movieId)}`;
+    const webFallback = `https://kvikmyndir.is/movie/${encodeURIComponent(movieId)}`;
+    return { appLink, webFallback };
+}
 
-  const handleShareFavorites = async () => {
+export const MovieShareButton: React.FC<MovieShareButtonProps> = ({ movieId, title, year }) => {
+    const handleShare = async () => {
         try {
-        const stored = await AsyncStorage.getItem("favorites");
-        const favorites: { id: string; title: string; year?: number }[] = stored ? JSON.parse(stored) : [];
-        if (favorites.length === 0) {
-            alert("No favorites to share!");
-            return;
-        }
-        const message = "My favorite movies:\n" + favorites.map(f => `${f.title}${f.year ? ` (${f.year})` : ""}`).join("\n");
+        const { appLink, webFallback } = buildMovieLink(movieId);
+        const message = `Check out this movie: ${title}${year ? ` (${year})` : ""}\nOpen in app: ${appLink}\nOr view online: ${webFallback}`;
         await Share.share({ message });
-        } catch (error) {
-        console.error("Error sharing favorites:", error);
+        } catch (err) {
+        console.error(err);
+        Alert.alert("Share failed", "Could not share this movie.");
         }
     };
 
     return (
-        <>
-        <TouchableOpacity style={styles.button} onPress={handleShareMovie}>
-            <Text style={styles.buttonText}>Share This Movie</Text>
+        <TouchableOpacity style={styles.button} onPress={handleShare}>
+        <Text style={styles.buttonText}>Share This Movie</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.favoritesButton]} onPress={handleShareFavorites}>
-            <Text style={styles.buttonText}>Share Favorites List</Text>
-        </TouchableOpacity>
-        </>
     );
 };
 
@@ -56,12 +43,11 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginVertical: SPACING.xs,
     },
-    favoritesButton: {
-        backgroundColor: "#1B73E8",
-    },
     buttonText: {
         color: COLORS.white,
         fontWeight: "600",
         fontSize: FONT_SIZES.medium,
     },
 });
+
+export default MovieShareButton;
