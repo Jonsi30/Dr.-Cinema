@@ -1,8 +1,16 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { setApiClientConfig } from "../src/api/client";
+
+setApiClientConfig({
+  username: process.env.EXPO_PUBLIC_KVIKMYNDIR_USERNAME,
+  password: process.env.EXPO_PUBLIC_KVIKMYNDIR_PASSWORD,
+});
 
 export default function RootLayout() {
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <Tabs>
       <Tabs.Screen 
         name="index" 
@@ -34,7 +42,7 @@ export default function RootLayout() {
       <Tabs.Screen 
         name="favourites" 
         options={{ 
-          title: "Favorites",
+          title: "Favourites",
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name="favorite" color={color} size={size} />
           ),
@@ -45,5 +53,6 @@ export default function RootLayout() {
       <Tabs.Screen name="movie" options={{ href: null }} />
       <Tabs.Screen name="authDev" options={{ href: null }} />
     </Tabs>
+    </GestureHandlerRootView>
   );
 }
