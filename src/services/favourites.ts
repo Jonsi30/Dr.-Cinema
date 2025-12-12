@@ -52,7 +52,7 @@ export const addFavourite = async (movie: Movie) => {
 
 export const removeFavourite = async (movieId: string) => {
     const current = await loadFavourites();
-    const next = current.filter((m) => m.id !== movieId);
+    const next = current.filter((m) => String(m.id) !== String(movieId));
     await saveFavourites(next);
     notify(next);
     return next;

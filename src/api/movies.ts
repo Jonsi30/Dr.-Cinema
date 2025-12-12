@@ -99,6 +99,8 @@ export const fetchMovies = async (filters?: MovieFilters) => {
         return undefined;
     };
 
+    
+
     // Map and enrich movies; perform TMDB lookups in parallel for those missing RT
     const mappedPromises = uniqueRaw.map(async (movie): Promise<Movie> => {
 
@@ -225,6 +227,58 @@ export const fetchMovies = async (filters?: MovieFilters) => {
 
     return unique;
 };
+
+    // Exported helper: try to resolve Rotten Tomatoes score from TMDB id or IMDB id
+    export const fetchRottenTomatoesFor = async (tmdbId?: string, imdbId?: string): Promise<number | undefined> => {
+        if (imdbId) {
+            try {
+                const omdbKey = "9ba200";
+                if (omdbKey) {
+                    const omdbUrl = `https://www.omdbapi.com/?i=${imdbId}&apikey=${omdbKey}`;
+                    const om = await apiGet<any>(omdbUrl, { skipAuth: true });
+                    if (om) {
+                        if (om.tomatoMeter) {
+                            const parsed = parseInt(String(om.tomatoMeter), 10);
+                            if (!Number.isNaN(parsed)) return parsed;
+                        }
+                        if (Array.isArray(om.Ratings)) {
+                            const rt = om.Ratings.find((r: any) => r.Source === "Rotten Tomatoes");
+                            if (rt && rt.Value) {
+                                const parsed = parseInt(String(rt.Value).replace(/%/, ""), 10);
+                                if (!Number.isNaN(parsed)) return parsed;
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn("OMDb lookup by IMDB id failed:", e);
+            }
+        }
+
+        if (tmdbId) {
+            // reuse the internal tmdb->omdb helper path used in fetchMovies
+            try {
+                const tmdbKey = "4f41c1115b2f9599be21ea355b19305a";
+                if (!tmdbKey) return undefined;
+                const extUrl = `https://api.themoviedb.org/3/movie/${tmdbId}/external_ids?api_key=${tmdbKey}`;
+                const ext = await apiGet<any>(extUrl, { skipAuth: true });
+                const imdbIdFromTmdb = ext?.imdb_id || undefined;
+                if (imdbIdFromTmdb) {
+                    return await fetchRottenTomatoesFor(undefined, imdbIdFromTmdb);
+                }
+                // fallback to tmdb movie details
+                const movieUrl = `https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${tmdbKey}`;
+                const m = await apiGet<any>(movieUrl, { skipAuth: true });
+                if (m && typeof m.vote_average === "number") {
+                    return Math.round(m.vote_average * 10);
+                }
+            } catch (err) {
+                console.warn("Error fetching Rotten Tomatoes via TMDB path:", err);
+            }
+        }
+
+        return undefined;
+    };
 
 // Search for a movie by title to get its full details
 export const fetchMovieById = (title: string) =>

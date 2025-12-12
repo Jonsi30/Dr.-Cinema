@@ -33,6 +33,7 @@ export interface Movie {
     };
     actors: string[];
     directors: string[];
+    writers?: string[];
     genres: string[];
     showtimes: {
         time: string;

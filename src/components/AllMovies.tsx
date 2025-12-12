@@ -1,10 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, SectionList, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useMovies } from '../hooks/useMovies';
+import { ActivityIndicator, SectionList, StyleSheet, Text, View } from 'react-native';
 import MovieCard from '../components/MovieCard';
 import MovieFiltersComponent from '../components/MovieFilters';
-import { COLORS, SPACING, FONT_SIZES } from '../constants/theme';
+import { COLORS, FONT_SIZES, SPACING } from '../constants/theme';
+import { useMovies } from '../hooks/useMovies';
 import { Movie } from '../types/types';
 
 export default function HomeScreen() {
@@ -17,7 +16,8 @@ export default function HomeScreen() {
                 params: { 
                     movieId: movie.id,
                     movieTitle: movie.title,
-                    movieData: JSON.stringify(movie),
+                        movieData: JSON.stringify(movie),
+                        cinemaId: movie.showtimes && movie.showtimes.length > 0 ? String((movie.showtimes[0] as any).theater?.id ?? (movie.showtimes[0] as any).cinemaId ?? '') : undefined,
                 },
             });
         };
@@ -31,10 +31,10 @@ export default function HomeScreen() {
         console.log("total movies: ", movies.length);
         console.log("total theaters: ", theaters.length);
 
-        const theaterMoviesMap: { [theaterId: number]: Movie[] } = {};
+        const theaterMoviesMap: { [theaterId: string]: Movie[] } = {};
 
         theaters.forEach(theater => {
-            theaterMoviesMap[theater.id] = [];
+            theaterMoviesMap[String(theater.id ?? '')] = [];
         })
 
         // Go through each movie and its showtimes
@@ -45,7 +45,9 @@ export default function HomeScreen() {
             movie.showtimes.forEach((showtime: any) => {
             const theaterId = showtime.theater?.id;
             if (theaterId && !addedToTheaters.has(theaterId)) {
-                theaterMoviesMap[theaterId].push(movie);
+                const key = String(theaterId);
+                if (!Array.isArray(theaterMoviesMap[key])) theaterMoviesMap[key] = [];
+                theaterMoviesMap[key].push(movie);
                 addedToTheaters.add(theaterId);
                 console.log('Added', movie.title, 'to theater', theaterId);
             }
@@ -61,7 +63,7 @@ export default function HomeScreen() {
             .map(theater => ({
             title: theater.name,
             theaterId: theater.id,
-            data: theaterMoviesMap[theater.id] || [],
+            data: theaterMoviesMap[String(theater.id ?? '')] || [],
             }))
             .filter(section => section.data.length > 0); 
     
@@ -84,7 +86,7 @@ export default function HomeScreen() {
             <View style={styles.container}>
             <Text style={styles.title}>Dr. Cinema</Text>
             <Text style={styles.subtitle}>{movies.length} movies at {sections.length} cinemas</Text>
-            
+
             <MovieFiltersComponent 
                 filters={filters}
                 onFiltersChange={setFilters}
