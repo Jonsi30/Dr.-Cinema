@@ -69,7 +69,7 @@ export default function FavouritesPage() {
 
         {/* Share button: only in normal mode and if there are favourites */}
         {!isSharedView && favourites.length > 0 && (
-            <FavoritesShareButton favorites={favourites} />
+            <FavoritesShareButton favorites={favourites.map(f => ({ ...f, id: String(f.id) }))} />
         )}
 
         {/* Loading indicator */}
