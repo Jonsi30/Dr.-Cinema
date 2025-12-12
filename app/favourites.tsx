@@ -1,9 +1,9 @@
 import { MaterialIcons } from "@expo/vector-icons";
-import * as Haptics from 'expo-haptics';
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import DraggableFlatList from 'react-native-draggable-flatlist';
+import MovieCard from "../src/components/MovieCard";
 import { COLORS, FONT_SIZES, SPACING } from "../src/constants/theme";
 import useFavourites from "../src/hooks/useFavourites";
 
@@ -29,46 +29,17 @@ export default function FavouritesPage() {
   };
 
   const renderItem = ({ item, index }: { item: any; index: number }) => (
-    <View style={styles.itemRow}>
-      <TouchableOpacity style={styles.itemInner} onPress={() => handleOpen(item)}>
-        <Image source={{ uri: item.poster }} style={styles.thumb} />
-        <View style={styles.info}>
-          <Text style={styles.title} numberOfLines={1}>{item.title}</Text>
-          <Text style={styles.year}>{item.year}</Text>
-          {item.genres ? <Text style={styles.genres} numberOfLines={1}>{(Array.isArray(item.genres) ? item.genres.join(', ') : String(item.genres))}</Text> : null}
-        </View>
-      </TouchableOpacity>
-
-        <View style={styles.actionsRow}>
-          <TouchableOpacity
-            onPress={async () => { await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); move(index, 0); }}
-            disabled={index === 0}
-          >
-            <MaterialIcons name="first-page" size={22} color={index === 0 ? '#ccc' : COLORS.textPrimary} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={async () => { await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); move(index, Math.max(0, index - 1)); }}
-            disabled={index === 0}
-          >
-            <MaterialIcons name="keyboard-arrow-up" size={24} color={index === 0 ? '#ccc' : COLORS.textPrimary} />
-          </TouchableOpacity>
+    <MovieCard
+      movie={item}
+      onPress={() => handleOpen(item)}
+      actions={(
+        <View style={{ alignItems: 'center', justifyContent: 'center' }}>
           <TouchableOpacity onPress={() => confirmRemove(item.id, item.title)}>
             <MaterialIcons name="delete" size={22} color="#d9534f" />
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={async () => { await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); move(index, Math.min(favourites.length - 1, index + 1)); }}
-            disabled={index === favourites.length - 1}
-          >
-            <MaterialIcons name="keyboard-arrow-down" size={24} color={index === favourites.length - 1 ? '#ccc' : COLORS.textPrimary} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={async () => { await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); move(index, favourites.length - 1); }}
-            disabled={index === favourites.length - 1}
-          >
-            <MaterialIcons name="last-page" size={22} color={index === favourites.length - 1 ? '#ccc' : COLORS.textPrimary} />
-          </TouchableOpacity>
         </View>
-    </View>
+      )}
+    />
   );
 
   return (
@@ -83,20 +54,18 @@ export default function FavouritesPage() {
             data={localData}
             keyExtractor={(i: any, idx: number) => `${i.id}-${idx}`}
             renderItem={({ item, index, drag, isActive }: any) => (
-              <View style={[styles.itemRow, isActive ? { opacity: 0.95 } : undefined]}>
-                <TouchableOpacity style={styles.itemInner} onPress={() => handleOpen(item)} onLongPress={drag}>
-                  <Image source={{ uri: item.poster }} style={styles.thumb} />
-                  <View style={styles.info}>
-                    <Text style={styles.title} numberOfLines={1}>{item.title}</Text>
-                    <Text style={styles.year}>{item.year}</Text>
-                    {item.genres ? <Text style={styles.genres} numberOfLines={1}>{(Array.isArray(item.genres) ? item.genres.join(', ') : String(item.genres))}</Text> : null}
-                  </View>
-                </TouchableOpacity>
-                <View style={styles.actions}>
-                  <TouchableOpacity onPress={() => confirmRemove(item.id, item.title)}>
-                    <MaterialIcons name="delete" size={22} color="#d9534f" />
-                  </TouchableOpacity>
-                </View>
+              <View style={[isActive ? { opacity: 0.95 } : undefined]}>
+                <MovieCard
+                  movie={item}
+                  onPress={() => handleOpen(item)}
+                  actions={(
+                    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+                      <TouchableOpacity onPress={() => confirmRemove(item.id, item.title)}>
+                        <MaterialIcons name="delete" size={22} color="#d9534f" />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                />
               </View>
             )}
             onDragEnd={({ data, from, to }: any) => {

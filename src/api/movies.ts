@@ -148,6 +148,25 @@ export const fetchMovies = async (filters?: MovieFilters) => {
       return names.length > 0 ? names : undefined;
     };
 
+    const normalizeGenres = (g: any): string[] | undefined => {
+      if (!g) return undefined;
+      if (Array.isArray(g)) {
+        const names = g.map((it: any) => {
+          if (!it) return undefined;
+          if (typeof it === 'string') return it;
+          return it.name || it.Name || it.NameEN || undefined;
+        }).filter(Boolean) as string[];
+        return names.length > 0 ? names : undefined;
+      }
+      // single object or string
+      if (typeof g === 'string') return [g];
+      if (typeof g === 'object') {
+        const n = g.name || g.Name || g.NameEN || undefined;
+        return n ? [n] : undefined;
+      }
+      return undefined;
+    };
+
     const actors = normalizeNames(movie.actors_abridged) || normalizeNames(movie.actors) || movie.actors;
     const directors = normalizeNames(movie.directors_abridged) || normalizeNames(movie.directors) || movie.directors;
     const writers = normalizeNames(movie.writers_abridged) || normalizeNames(movie.writers) || movie.writers;
@@ -197,6 +216,7 @@ export const fetchMovies = async (filters?: MovieFilters) => {
       actors,
       directors,
       writers,
+      genres: normalizeGenres(movie.genres) || undefined,
       country,
       rating: ratingVal,
       ratings: ratings.imdb || ratings.rottenTomatoes ? ratings : undefined,

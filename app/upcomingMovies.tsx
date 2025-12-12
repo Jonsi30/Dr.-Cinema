@@ -63,7 +63,7 @@ export default function UpcomingMovies() {
   };
 
   const renderItem = ({ item }: { item: UpcomingMovie }) => (
-    <MovieCard movie={item} onPress={() => handlePress(item)} />
+    <MovieCard movie={item} onPress={() => handlePress(item)} showGenres={false} />
   );
 
   return (

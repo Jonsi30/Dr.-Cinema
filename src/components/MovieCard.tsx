@@ -1,3 +1,4 @@
+import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS, FONT_SIZES, SPACING } from '../constants/theme';
 import { Movie } from '../types/types';
@@ -5,9 +6,11 @@ import { Movie } from '../types/types';
 type MovieCardProps = {
     movie: Movie;
     onPress: () => void;
+    actions?: React.ReactNode;
+    showGenres?: boolean;
 };
 
-export default function MovieCard({ movie, onPress }: MovieCardProps) {
+export default function MovieCard({ movie, onPress, actions, showGenres = true }: MovieCardProps) {
     const rawRelease = (movie as any).releaseDate ?? (movie as any)["release-dateIS"] ?? (movie as any)["release-date"] ?? (movie as any).release_date;
     let releaseDateFormatted: string | null = null;
     if (rawRelease) {
@@ -34,6 +37,9 @@ export default function MovieCard({ movie, onPress }: MovieCardProps) {
         <View style={styles.info}>
             <Text style={styles.title}>{movie.title}</Text>
             <Text style={styles.year}>{movie.year}</Text>
+            {showGenres && Array.isArray(movie.genres) && movie.genres.length > 0 ? (
+                <Text style={styles.genres}>{movie.genres.join(', ')}</Text>
+            ) : null}
             {releaseDateFormatted ? (
                 <Text style={styles.releaseDate}>Release: {releaseDateFormatted}</Text>
             ) : null}
@@ -41,6 +47,7 @@ export default function MovieCard({ movie, onPress }: MovieCardProps) {
             <Text style={styles.rating}>⭐ {(movie as any).omdb.imdbRating}/10</Text>
             )}
         </View>
+        {actions ? <View style={styles.actions}>{actions}</View> : null}
         </TouchableOpacity>
     );
 }
@@ -91,5 +98,11 @@ const styles = StyleSheet.create({
         fontSize: FONT_SIZES.small,
         color: COLORS.textSecondary,
         marginTop: SPACING.xs,
+    },
+    actions: {
+        width: 56,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingRight: SPACING.md,
     },
 });
