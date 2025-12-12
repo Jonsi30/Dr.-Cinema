@@ -43,11 +43,27 @@ export const fetchMovies = async (filters?: MovieFilters) => {
   });
 
   // Helper: try to fetch Rotten Tomatoes (or a best-effort fallback) from TMDB and/or OMDb
-  const fetchRottenFromTmdb = async (tmdbId?: string) => {
+    const fetchRottenFromTmdb = async (tmdbId?: string) => {
     if (!tmdbId) return undefined;
 
-    const tmdbKey = process.env.EXPO_PUBLIC_TMDB_API_KEY || process.env.TMDB_API_KEY;
-    const omdbKey = process.env.EXPO_PUBLIC_OMDB_API_KEY || process.env.OMDB_API_KEY;
+    // Resolve API keys: prefer environment variables, fall back to a local testing file
+    let tmdbKey = process.env.EXPO_PUBLIC_TMDB_API_KEY || process.env.TMDB_API_KEY;
+    let omdbKey = process.env.EXPO_PUBLIC_OMDB_API_KEY || process.env.OMDB_API_KEY;
+    if (!tmdbKey || !omdbKey) {
+      try {
+        // attempt to load an optional local file `src/config/testingKeys.ts`
+        // that exports default { tmdbKey, omdbKey }
+        // This file should NOT be committed; copy from testingKeys.example.ts
+        // @ts-ignore: optional local testingKeys may not exist
+        // eslint-disable-next-line import/no-unresolved
+        const mod = await import('../config/testingKeys');
+        const localKeys = mod?.default;
+        tmdbKey = tmdbKey || localKeys?.tmdbKey;
+        omdbKey = omdbKey || localKeys?.omdbKey;
+      } catch {
+        // ignore if not present
+      }
+    }
 
     if (!tmdbKey) {
       // No TMDB key configured
