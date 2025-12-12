@@ -1,3 +1,4 @@
+import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS, FONT_SIZES, SPACING } from '../constants/theme';
 import { Movie } from '../types/types';
@@ -5,12 +6,30 @@ import { Movie } from '../types/types';
 type MovieCardProps = {
     movie: Movie;
     onPress: () => void;
+    actions?: React.ReactNode;
+    showGenres?: boolean;
+    onLongPress?: () => void;
 };
 
-export default function MovieCard({ movie, onPress }: MovieCardProps) {
+export default function MovieCard({ movie, onPress, actions, showGenres = true, onLongPress }: MovieCardProps) {
+    const rawRelease = (movie as any).releaseDate ?? (movie as any)["release-dateIS"] ?? (movie as any)["release-date"] ?? (movie as any).release_date;
+    let releaseDateFormatted: string | null = null;
+    if (rawRelease) {
+        try {
+            const dt = new Date(String(rawRelease));
+            if (!Number.isNaN(dt.getTime())) {
+                releaseDateFormatted = dt.toLocaleDateString();
+            } else {
+                // fallback: try to extract YYYY-MM-DD
+                const m = String(rawRelease).match(/(\d{4}-\d{2}-\d{2})/);
+                if (m && m[1]) releaseDateFormatted = new Date(m[1]).toLocaleDateString();
+            }
+        } catch {
+            releaseDateFormatted = null;
+        }
+    }
     return (
-        
-        <TouchableOpacity style={styles.card} onPress={onPress}>
+        <TouchableOpacity style={styles.card} onPress={onPress} onLongPress={onLongPress}>
         <Image 
             source={{ uri: movie.poster }} 
             style={styles.poster}
@@ -19,12 +38,19 @@ export default function MovieCard({ movie, onPress }: MovieCardProps) {
         <View style={styles.info}>
             <Text style={styles.title}>{movie.title}</Text>
             <Text style={styles.year}>{movie.year}</Text>
-            {movie.omdb?.imdbRating && (
-            <Text style={styles.rating}>⭐ {movie.omdb.imdbRating}/10</Text>
+            {showGenres && Array.isArray(movie.genres) && movie.genres.length > 0 ? (
+                <Text style={styles.genres}>{movie.genres.join(', ')}</Text>
+            ) : null}
+            {releaseDateFormatted ? (
+                <Text style={styles.releaseDate}>Release: {releaseDateFormatted}</Text>
+            ) : null}
+            {(movie as any).omdb?.imdbRating && (
+            <Text style={styles.rating}>⭐ {(movie as any).omdb.imdbRating}/10</Text>
             )}
             
             <Text style={styles.genres}>{movie.genres}</Text>
         </View>
+        {actions ? <View style={styles.actions}>{actions}</View> : null}
         </TouchableOpacity>
     );
 }
@@ -70,5 +96,16 @@ const styles = StyleSheet.create({
         fontSize: FONT_SIZES.small,
         color: '#FFB800',
         fontWeight: '600',
-    }
+    },
+    releaseDate: {
+        fontSize: FONT_SIZES.small,
+        color: COLORS.textSecondary,
+        marginTop: SPACING.xs,
+    },
+    actions: {
+        width: 56,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingRight: SPACING.md,
+    },
 });

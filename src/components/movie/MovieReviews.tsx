@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
-import { Alert, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { COLORS, FONT_SIZES, SPACING } from "../../constants/theme";
 
 interface Review {
@@ -73,17 +73,18 @@ export const MovieReviews: React.FC<MovieReviewsProps> = ({ movieId }) => {
             </TouchableOpacity>
         </View>
 
-        <FlatList
-            data={reviews}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-            <View style={styles.reviewCard}>
+        {reviews.length === 0 ? (
+            <Text style={styles.empty}>No reviews yet.</Text>
+        ) : (
+            <View>
+            {reviews.map((item) => (
+                <View key={item.id} style={styles.reviewCard}>
                 <Text style={styles.reviewRating}>{"★".repeat(item.rating)}{"☆".repeat(5 - item.rating)}</Text>
                 <Text style={styles.reviewText}>{item.text}</Text>
+                </View>
+            ))}
             </View>
-            )}
-            ListEmptyComponent={<Text style={styles.empty}>No reviews yet.</Text>}
-        />
+        )}
         </View>
     );
 };

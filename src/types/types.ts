@@ -1,7 +1,7 @@
 export interface Ratings {
-    imdb?: number;
-    rottenTomatoes?: number;
-    user?: string;
+	imdb?: number;
+	rottenTomatoes?: number | string;
+	user?: number;
 }
 
 export interface Trailer {

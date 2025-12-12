@@ -113,10 +113,10 @@ export async function getAllMovies(filters?: MovieFilters) {
                 imdbRating: apiMovie.ratings?.imdb || "0",
                 tomatoRating: `${apiMovie.ratings?.rotten_critics || 0}%`,
                 rated: apiMovie.certificateIS || "",
-            } : undefined,  
-            actors: apiMovie.actors_abridged?.map((actor: any) => actor.name || "").filter(a => a) || [],
-            directors: apiMovie.directors_abridged?.map((director: any) => director.name || "").filter(d => d) || [],
-            genres: apiMovie.genres_abridged?.map((genre: any) => genre.name || "").filter(g => g) || [],
+            } : undefined,
+            actors: apiMovie.actors_abridged?.map((actor: any) => actor.name || "").filter((a: string) => !!a) || [],
+            directors: apiMovie.directors_abridged?.map((director: any) => director.name || "").filter((d: string) => !!d) || [],
+            genres: apiMovie.genres?.map((genre: any) => genre.name || "").filter((g: string) => !!g) || [],
             showtimes: apiMovie.showtimes?.flatMap((showtime: any) => {
                 return showtime.schedule?.map((sched: any) => ({
                     time: sched.time || "",
