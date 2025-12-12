@@ -8,10 +8,11 @@ type MovieCardProps = {
     onPress: () => void;
     actions?: React.ReactNode;
     showGenres?: boolean;
+    showYear?: boolean;
     onLongPress?: () => void;
 };
 
-export default function MovieCard({ movie, onPress, actions, showGenres = true, onLongPress }: MovieCardProps) {
+export default function MovieCard({ movie, onPress, actions, showGenres = true, showYear = true, onLongPress }: MovieCardProps) {
     const rawRelease = (movie as any).releaseDate ?? (movie as any)["release-dateIS"] ?? (movie as any)["release-date"] ?? (movie as any).release_date;
     let releaseDateFormatted: string | null = null;
     if (rawRelease) {
@@ -37,7 +38,7 @@ export default function MovieCard({ movie, onPress, actions, showGenres = true, 
         />
         <View style={styles.info}>
             <Text style={styles.title}>{movie.title}</Text>
-            <Text style={styles.year}>{movie.year}</Text>
+            {showYear ? <Text style={styles.year}>{movie.year}</Text> : null}
             {showGenres && Array.isArray(movie.genres) && movie.genres.length > 0 ? (
                 <Text style={styles.genres}>{movie.genres.join(', ')}</Text>
             ) : null}
@@ -48,7 +49,6 @@ export default function MovieCard({ movie, onPress, actions, showGenres = true, 
             <Text style={styles.rating}>⭐ {(movie as any).omdb.imdbRating}/10</Text>
             )}
             
-            <Text style={styles.genres}>{movie.genres}</Text>
         </View>
         {actions ? <View style={styles.actions}>{actions}</View> : null}
         </TouchableOpacity>

@@ -84,7 +84,7 @@ export default function HomeScreen() {
             <View style={styles.container}>
             <Text style={styles.title}>Dr. Cinema</Text>
             <Text style={styles.subtitle}>{movies.length} movies at {sections.length} cinemas</Text>
-            
+
             <MovieFiltersComponent 
                 filters={filters}
                 onFiltersChange={setFilters}
