@@ -35,7 +35,7 @@ export async function authenticate(username: string, password: string) {
     const params = new URLSearchParams();
     params.append("username", username);
     params.append("password", password);
-
+    console.log("usename: ",username,"password: ", password)
     const resp = await api.post("/authenticate", params.toString(), {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
     });

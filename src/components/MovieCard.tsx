@@ -1,7 +1,6 @@
-import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { COLORS, FONT_SIZES, SPACING } from '../constants/theme';
 import { Movie } from '../types/types';
-import { COLORS, SPACING, FONT_SIZES } from '../constants/theme';
 
 type MovieCardProps = {
     movie: Movie;
@@ -10,6 +9,7 @@ type MovieCardProps = {
 
 export default function MovieCard({ movie, onPress }: MovieCardProps) {
     return (
+        
         <TouchableOpacity style={styles.card} onPress={onPress}>
         <Image 
             source={{ uri: movie.poster }} 
@@ -22,6 +22,8 @@ export default function MovieCard({ movie, onPress }: MovieCardProps) {
             {movie.omdb?.imdbRating && (
             <Text style={styles.rating}>⭐ {movie.omdb.imdbRating}/10</Text>
             )}
+            
+            <Text style={styles.genres}>{movie.genres}</Text>
         </View>
         </TouchableOpacity>
     );
@@ -68,5 +70,5 @@ const styles = StyleSheet.create({
         fontSize: FONT_SIZES.small,
         color: '#FFB800',
         fontWeight: '600',
-    },
+    }
 });
