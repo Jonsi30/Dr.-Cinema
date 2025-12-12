@@ -1,6 +1,6 @@
 export interface Ratings {
 	imdb?: number;
-	rottenTomatoes?: number;
+	rottenTomatoes?: number | string;
 	user?: number;
 }
 

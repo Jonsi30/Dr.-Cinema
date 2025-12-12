@@ -59,6 +59,7 @@ export default function MoviePage() {
     );
   }
 
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       <MovieHeader
