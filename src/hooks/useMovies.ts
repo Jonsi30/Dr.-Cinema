@@ -81,7 +81,7 @@ export function useMovies() {
                 };
                 
                 const startMinutes = timeToMinutes(filters.showtimeRange.start);
-                const endMinutes = timeToMinutes(filters.showtimeRange.end);
+                const endMinutes = timeToMinutes((filters.showtimeRange as any).end ?? filters.showtimeRange.start);
                 
                 // Check if any showtime starts within the range
                 const matches = movie.showtimes?.some((showtime: any) => {
